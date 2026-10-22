@@ -18,7 +18,7 @@ const MyQuotations = () => {
               </div>
               <h1>My 
 
-                <em>quotations.</em>
+                <em> quotations.</em>
               </h1>
               <p>Review pricing, specifications, and quote validity for your projects.</p>
             </div>

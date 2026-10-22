@@ -18,7 +18,7 @@ const MyMachines = () => {
               </div>
               <h1>Machines for 
 
-                <em>your work.</em>
+                <em> your work.</em>
               </h1>
               <p>Explore your saved platforms and pick up a configuration when you are ready.</p>
             </div>

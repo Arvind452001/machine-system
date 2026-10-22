@@ -19,7 +19,7 @@ const QuotationExample = () => {
           </div>
           <h1>Your machine 
 
-            <em>quotation.</em>
+            <em> quotation.</em>
           </h1>
           <p className="quote-toolbar-copy">Review the itemized estimate and save a PDF copy for your records.</p>
         </div>

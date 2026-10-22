@@ -68,7 +68,7 @@ const LogIn = () => {
 
           <h1>
             Good to have<br />
-            you <em>back.</em>
+            you <em> back.</em>
           </h1>
 
           <p>

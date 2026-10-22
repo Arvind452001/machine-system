@@ -42,7 +42,7 @@ const RepresentativeQuotes = () => {
             <span></span> PRICING &amp; FINAL QUOTE
           </div>
           <h1>
-            Build a quote <em>with confidence.</em>
+            Build a quote <em> with confidence.</em>
           </h1>
           <p>
             Confirm the numbers and terms before sharing a clear proposal with

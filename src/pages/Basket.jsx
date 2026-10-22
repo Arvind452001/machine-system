@@ -19,7 +19,7 @@ const Basket = () => {
           </div>
           <h1>Review your 
 
-            <em>selection.</em>
+            <em> selection.</em>
           </h1>
           <p>Check the platform and indicative price before sending your enquiry.</p>
         </div>

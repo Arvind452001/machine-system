@@ -10,7 +10,7 @@ const ProfileSettings = () => {
               </div>
               <h1>Profile 
 
-                <em>settings.</em>
+                <em> settings.</em>
               </h1>
               <p>Keep your contact details up to date for quotes and machine enquiries.</p>
             </div>

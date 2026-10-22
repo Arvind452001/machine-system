@@ -94,7 +94,7 @@ const RepresentativeCustomerDetails = () => {
             <span></span> {customer.enquiryCode}
           </div>
           <h2>
-            {customer.name} <em>contact.</em>
+            {customer.name} <em> contact.</em>
           </h2>
           <p>
             {customer.role} <span>·</span> {customer.location} <span>·</span>{" "}

@@ -18,7 +18,7 @@ const MyEnquiries = () => {
               </div>
               <h1>My 
 
-                <em>enquiries.</em>
+                <em> enquiries.</em>
               </h1>
               <p>Follow every machine request from first review to final quotation.</p>
             </div>

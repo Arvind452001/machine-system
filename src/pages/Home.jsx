@@ -361,7 +361,7 @@ const Home = () => {
           </div>
           <h2>From first idea<br/>to first 
 
-            <em>part.</em>
+            <em> part.</em>
           </h2>
           <p>Get a useful estimate, then work through the important details with someone who knows the machine and your market.</p>
           <Link className="button button-dark" to="/machines">Start configuring 
@@ -465,7 +465,7 @@ const Home = () => {
 
             </div>
             <h2>Good work travels.<br/>
-              <em>Good partners stay.</em>
+              <em> Good partners stay.</em>
             </h2>
           </div>
           <p>Example customer feedback for this design preview.</p>

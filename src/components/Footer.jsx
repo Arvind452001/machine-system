@@ -38,7 +38,8 @@ const Footer = () => {
           </div>
           <div className="footer-column">
             <h3>MACHINE</h3>
-            <Link to="/#how-it-works">How it works</Link>
+            <Link to="/about">About Us</Link>
+            <Link to="/how-it-works">How it works</Link>
             <Link to="/#testimonial">Customer stories</Link>
             <Link to="/contact">Contact</Link>
           </div>

@@ -19,7 +19,7 @@ const Configure = () => {
           </div>
           <h1>Make it 
 
-            <em>work harder.</em>
+            <em> work harder.</em>
           </h1>
           <p>Compare platform options and find the right starting specification.</p>
         </div>

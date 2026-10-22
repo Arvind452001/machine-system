@@ -21,7 +21,7 @@ const MachineDetails = () => {
             </div>
             <h1>Find your 
 
-              <em>wor khorse.</em>
+              <em> work hours</em>
             </h1>
             <p>Compare machine specifications, starting prices, and application details. Choose a platform to configure it for your production needs.</p>
           </div>
@@ -146,7 +146,7 @@ const MachineDetails = () => {
               </div>
               <h2 id="related-heading">Related 
 
-                <em>machines &amp; solutions.</em>
+                <em> machines &amp; solutions.</em>
               </h2>
               <p>Swipe or scroll to explore eight products and production options.</p>
             </div>

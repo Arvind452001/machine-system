@@ -18,7 +18,7 @@ const EnquiryDetails = () => {
               </div>
               <h1>Axis 400 
 
-                <em>enquiry.</em>
+                <em> enquiry.</em>
               </h1>
               <p>Submitted October 12, 2026 · Precision CNC lathe</p>
             </div>

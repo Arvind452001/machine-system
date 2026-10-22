@@ -18,7 +18,7 @@ const QuotationDetails = () => {
               </div>
               <h1>Your machine 
 
-                <em>quotation.</em>
+                <em> quotation.</em>
               </h1>
               <p>Quote NL-Q-2026-0419 · Issued September 28, 2026 · USD</p>
             </div>

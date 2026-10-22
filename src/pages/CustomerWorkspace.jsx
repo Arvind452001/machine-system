@@ -10,7 +10,7 @@ const CustomerWorkspace = () => {
               </div>
               <h1>Your Northline 
 
-                <em>workspace.</em>
+                <em> workspace.</em>
               </h1>
               <p>Pick up where you left off or explore a machine for your next run.</p>
             </div>
