@@ -1,51 +1,9 @@
 import { Link } from "react-router-dom";
 const MyEnquiries = () => {
   return (
-    <div className="customer-shell">
-      <aside className="customer-sidebar">
-        <div className="customer-sidebar-intro">
-          <span className="customer-nav-label">YOUR WORKSPACE</span>
-          <h2>Built around<br/>your 
-
-            <em>work.</em>
-          </h2>
-          <p>Enquiries, quotations, and machine details in one place.</p>
-        </div>
-        <nav className="customer-nav" aria-label="Customer navigation">
-          <Link to="/customer-dashboard">
-            <i className="bi bi-grid-1x2"></i> Overview
-
-          </Link>
-          <Link className="active" aria-current="page" to="/my-enquiries">
-            <i className="bi bi-file-earmark-text"></i> My enquiries
-
-          </Link>
-          <Link  to="/my-quotations">
-            <i className="bi bi-receipt"></i> My quotations
-
-          </Link>
-          <Link  to="/my-machines">
-            <i className="bi bi-gear"></i> My machines
-
-          </Link>
-          <Link to="/profile-settings">
-            <i className="bi bi-person-gear"></i> Profile settings
-
-          </Link>
-          <Link to="/login">
-            <i className="bi bi-box-arrow-right"></i> Log out
-
-          </Link>
-        </nav>
-        <div className="customer-sidebar-note">
-          <i className="bi bi-headset"></i> Need a help?<br/>
-        
-        </div>
-      </aside>
-      <div className="customer-main">
-        <main className="customer-content account-hub">
+    <main className="customer-content account-hub">
           <div className="page-crumb">
-            <Link to="/customer-dashboard">
+            <Link to="/customer/dashboard">
               <i className="bi bi-arrow-left"></i> My workspace
 
             </Link>
@@ -89,7 +47,7 @@ const MyEnquiries = () => {
               <span>Oct 12, 2026</span>
               <span className="status-pill">Awaiting contact</span>
               <span>$50,900</span>
-              <Link className="row-action" to="/enquiry-details?id=NL-ENQ-10482" aria-label="View Axis 400 enquiry">
+              <Link className="row-action" to="/customer/enquiry-details?id=NL-ENQ-10482" aria-label="View Axis 400 enquiry">
                 <i className="bi bi-arrow-up-right"></i>
               </Link>
             </div>
@@ -101,7 +59,7 @@ const MyEnquiries = () => {
               <span>Sep 28, 2026</span>
               <span className="status-pill ready">Quote ready</span>
               <span>$78,500</span>
-              <Link className="row-action" to="/enquiry-details?id=NL-ENQ-09916" aria-label="View Arc 700 enquiry">
+              <Link className="row-action" to="/customer/enquiry-details?id=NL-ENQ-09916" aria-label="View Arc 700 enquiry">
                 <i className="bi bi-arrow-up-right"></i>
               </Link>
             </div>
@@ -113,7 +71,7 @@ const MyEnquiries = () => {
               <span>Aug 14, 2026</span>
               <span className="status-pill ready">Quote ready</span>
               <span>$108,600</span>
-              <Link className="row-action" to="/enquiry-details?id=NL-ENQ-08354" aria-label="View Flare 6 enquiry">
+              <Link className="row-action" to="/customer/enquiry-details?id=NL-ENQ-08354" aria-label="View Flare 6 enquiry">
                 <i className="bi bi-arrow-up-right"></i>
               </Link>
             </div>
@@ -130,9 +88,7 @@ const MyEnquiries = () => {
             </Link>
           </div>
         </main>
-      </div>
-    </div>
-  )
-}
+  );
+};
 
-export default MyEnquiries
+export default MyEnquiries;

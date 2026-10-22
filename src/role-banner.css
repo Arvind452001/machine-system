@@ -1,0 +1,152 @@
+/* Role Context Bar (Top of Workspace) */
+.role-context-bar {
+  width: 100%;
+  padding: 8px 6%;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #dce1da;
+  font-size: 11px;
+  position: relative;
+  z-index: 4;
+}
+
+.role-context-bar.customer-context {
+  background: linear-gradient(90deg, #122c23 0%, #1e4537 100%);
+  color: #e5f1ea;
+  border-bottom: 1px solid #285747;
+}
+
+.role-context-bar.rep-context {
+  background: linear-gradient(90deg, #2c1209 0%, #4a1f12 50%, #202823 100%);
+  color: #faede9;
+  border-bottom: 1px solid #6b2e1d;
+}
+
+.role-context-content {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.role-context-left,
+.role-context-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.customer-context .role-pill {
+  background: #27624c;
+  color: #c9eedc;
+}
+
+.rep-context .role-pill {
+  background: #c94f2d;
+  color: #ffffff;
+}
+
+.role-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.role-user-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.role-user-name strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.customer-context .role-user-name small {
+  color: #9ecdb8;
+  font-size: 9px;
+}
+
+.rep-context .role-user-name small {
+  color: #f2b4a3;
+  font-size: 9px;
+}
+
+.role-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  opacity: 0.95;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+  display: inline-block;
+}
+
+.role-switch-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.role-switch-link:hover {
+  background: #ffffff;
+  color: #202823;
+  border-color: #ffffff;
+}
+
+/* Header Role Badges */
+.header-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-right: 6px;
+}
+
+.header-role-badge.customer-role {
+  background: #173f35;
+  color: #d1fae5;
+  border: 1px solid #2e7456;
+}
+
+.header-role-badge.rep-role {
+  background: #3d140b;
+  color: #fed7aa;
+  border: 1px solid #c94f2d;
+}

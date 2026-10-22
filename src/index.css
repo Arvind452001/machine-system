@@ -41,8 +41,12 @@ button, input, select, textarea { font: inherit; }
 .auth-links { display: flex; align-items: center; gap: 8px; }
 .auth-links a { min-height: 36px; padding: 0 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #ffffff65; color: #ffffff; font-size: 10px; font-weight: 500; text-decoration: none; white-space: nowrap; }
 .auth-links a:hover { border-color: var(--lime); color: var(--lime); }
-.auth-links .signup-link { border-color: var(--lime); background: var(--lime); color: #ffffff; }
-.auth-links .signup-link:hover { border-color: #ad3f23; background: #ad3f23; color: #ffffff; }
+.auth-links .signup-link,
+.auth-links .auth-active,
+.auth-links a.active { border-color: var(--lime); background: var(--lime); color: #ffffff; }
+.auth-links .signup-link:hover,
+.auth-links .auth-active:hover,
+.auth-links a.active:hover { border-color: #ad3f23; background: #ad3f23; color: #ffffff; }
 .eyebrow { display: flex; align-items: center; gap: 9px; color: #647168; font-size: 9px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
 .eyebrow > span { width: 20px; height: 1px; background: var(--orange); }
 .eyebrow-light { color: #c4d0c7; }

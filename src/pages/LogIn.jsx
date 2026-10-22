@@ -1,10 +1,62 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const LogIn = () => {
+  const { user, isAuthenticated, login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // If already logged in, do not show login page - redirect straight to dashboard
+  if (isAuthenticated) {
+    const targetDashboard =
+      user?.role === "representative"
+        ? "/representative/dashboard"
+        : "/customer/dashboard";
+    return <Navigate to={targetDashboard} replace />;
+  }
+
   const [role, setRole] = useState("customer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   const isCustomer = role === "customer";
+
+  const handleRoleChange = (selectedRole) => {
+    setRole(selectedRole);
+    setErrorMessage("");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage("Please enter both work email and password.");
+      return;
+    }
+
+    const result = await login(email, password, role);
+
+    if (result.success) {
+      const fromPath = location.state?.from?.pathname;
+      const defaultDashboard =
+        result.user.role === "representative"
+          ? "/representative/dashboard"
+          : "/customer/dashboard";
+
+      const validDestination =
+        fromPath && fromPath !== "/login" && fromPath !== "/signup"
+          ? fromPath
+          : defaultDashboard;
+
+      navigate(validDestination, { replace: true });
+    } else {
+      setErrorMessage(result.message);
+    }
+  };
 
   return (
     <div>
@@ -20,23 +72,23 @@ const LogIn = () => {
           </h1>
 
           <p>
-            Pick up where you left off. Your machine enquiries and
-            conversations belong in one place.
+            Pick up where you left off. Your machine enquiries, quotations,
+            and representative conversations belong in one place.
           </p>
 
           <div className="auth-intro-note">
-            <i className="bi bi-shield-check"></i>
+            <i className="bi bi-shield-lock"></i>
             <span>
-              Account access is a design preview.
+              Your account and session are securely protected.
               <br />
-              Authentication is not connected.
+              Enter your credentials to access your workspace.
             </span>
           </div>
         </section>
 
         <section className="auth-panel">
           {/* Role Switch Buttons */}
-          <div
+           <div
             style={{
               display: "flex",
               gap: "10px",
@@ -73,11 +125,33 @@ const LogIn = () => {
 
           <p>
             {isCustomer
-              ? "After login, open your customer dashboard to view enquiries and quotations."
-              : "After login, open your representative dashboard to manage customer enquiries and conversations."}
+              ? "Sign in to open your customer dashboard, submit machine enquiries, and review quotations."
+              : "Sign in to access your representative dashboard, manage customer enquiries, and prepare quotes."}
           </p>
 
-          <div className="auth-form">
+          {/* Error Message Alert */}
+          {errorMessage && (
+            <div
+              role="alert"
+              style={{
+                margin: "16px 0",
+                padding: "12px 16px",
+                background: "#fde8e4",
+                border: "1px solid #e87a5d",
+                color: "#9e2c14",
+                borderRadius: "6px",
+                fontSize: "0.9rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "1.1rem" }}></i>
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label" htmlFor="login-email">
                 Work email
@@ -86,7 +160,10 @@ const LogIn = () => {
                 className="form-control"
                 id="login-email"
                 type="email"
+                required
                 autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
               />
             </div>
@@ -99,46 +176,44 @@ const LogIn = () => {
                 className="form-control"
                 id="login-password"
                 type="password"
+                required
                 autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
               />
             </div>
 
             <div className="auth-form-meta">
-              <label>
-                <input type="checkbox" /> Keep me signed in
+              <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />{" "}
+                Keep me signed in
               </label>
               <Link to="/contact">Forgot password?</Link>
             </div>
 
-            <Link
+            <button
+              type="submit"
               className="button button-lime"
-              to={
-                isCustomer
-                  ? "/customer-dashboard"
-                  : "/representative-dashboard"
-              }
+              style={{ width: "100%", justifyContent: "center", cursor: "pointer" }}
             >
               {isCustomer
-                ? "Continue to my account"
-                : "Continue to representative dashboard"}
-
+                ? "Sign in as Customer"
+                : "Sign in as Representative"}
               <i className="bi bi-arrow-right"></i>
-            </Link>
+            </button>
 
             <p className="auth-switch">
               {isCustomer
                 ? "New to MACHINE? "
                 : "New representative? "}
-
               <Link to="/signup">Create an account</Link>
             </p>
-
-            <p className="summary-note">
-              Static preview only: this link opens the selected dashboard
-              without checking credentials.
-            </p>
-          </div>
+          </form>
         </section>
       </main>
     </div>

@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const SignUp = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  // If already logged in, do not show signup page - redirect straight to dashboard
+  if (isAuthenticated) {
+    const targetDashboard =
+      user?.role === "representative"
+        ? "/representative/dashboard"
+        : "/customer/dashboard";
+    return <Navigate to={targetDashboard} replace />;
+  }
+
   const [role, setRole] = useState("customer");
 
   const isCustomer = role === "customer";
@@ -173,8 +185,8 @@ const SignUp = () => {
               className="button button-lime mt-3"
               to={
                 isCustomer
-                  ? "/customer-dashboard"
-                  : "/representative-dashboard"
+                  ? "/customer/dashboard"
+                  : "/representative/dashboard"
               }
             >
               {isCustomer

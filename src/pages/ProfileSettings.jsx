@@ -1,49 +1,7 @@
 import { Link } from "react-router-dom";
 const ProfileSettings = () => {
   return (
-   <div className="customer-shell">
-      <aside className="customer-sidebar">
-        <div className="customer-sidebar-intro">
-          <span className="customer-nav-label">YOUR WORKSPACE</span>
-          <h2>Built around<br/>your 
-
-            <em>work.</em>
-          </h2>
-          <p>Enquiries, quotations, and machine details in one place.</p>
-        </div>
-        <nav className="customer-nav" aria-label="Customer navigation">
-          <Link to="/customer-dashboard">
-            <i className="bi bi-grid-1x2"></i> Overview
-
-          </Link>
-          <Link to="/my-enquiries">
-            <i className="bi bi-file-earmark-text"></i> My enquiries
-
-          </Link>
-          <Link to="/my-quotations">
-            <i className="bi bi-receipt"></i> My quotations
-
-          </Link>
-          <Link to="/my-machines">
-            <i className="bi bi-gear"></i> My machines
-
-          </Link>
-          <Link className="active" to="/profile-settings" aria-current="page">
-            <i className="bi bi-person-gear"></i> Profile settings
-
-          </Link>
-          <Link to="/login">
-            <i className="bi bi-box-arrow-right"></i> Log out
-
-          </Link>
-        </nav>
-       <div className="customer-sidebar-note">
-          <i className="bi bi-headset"></i> Need a help?<br/>
-        
-        </div>
-      </aside>
-      <div className="customer-main">
-        <main className="customer-content profile-settings-content">
+    <main className="customer-content profile-settings-content">
           <section className="customer-welcome profile-welcome">
             <div>
               <div className="eyebrow">
@@ -147,10 +105,7 @@ const ProfileSettings = () => {
           </form>
           <p className="summary-note">Static preview: profile and password changes are not saved.</p>
         </main>
-      
-      </div>
-    </div>
-  )
-}
+  );
+};
 
-export default ProfileSettings
+export default ProfileSettings;

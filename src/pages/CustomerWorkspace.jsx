@@ -1,49 +1,7 @@
 import { Link } from "react-router-dom";
 const CustomerWorkspace = () => {
   return (
-     <div className="customer-shell">
-      <aside className="customer-sidebar">
-        <div className="customer-sidebar-intro">
-          <span className="customer-nav-label">YOUR WORKSPACE</span>
-          <h2>Built around<br/>your 
-
-            <em>work.</em>
-          </h2>
-          <p>Enquiries, quotations, and machine details in one place.</p>
-        </div>
-        <nav className="customer-nav" aria-label="Customer navigation">
-          <Link className="active" to="/customer-dashboard" aria-current="page">
-            <i className="bi bi-grid-1x2"></i> Overview
-
-          </Link>
-          <Link to="/my-enquiries">
-            <i className="bi bi-file-earmark-text"></i> My enquiries
-
-          </Link>
-          <Link to="/my-quotations">
-            <i className="bi bi-receipt"></i> My quotations
-
-          </Link>
-          <Link to="/my-machines">
-            <i className="bi bi-gear"></i> My machines
-
-          </Link>
-          <Link to="/profile-settings">
-            <i className="bi bi-person-gear"></i> Profile settings
-
-          </Link>
-          <Link to="/login">
-            <i className="bi bi-box-arrow-right"></i> Log out
-
-          </Link>
-        </nav>
-        <div className="customer-sidebar-note">
-          <i className="bi bi-headset"></i> Need a help?<br/>
-        
-        </div>
-      </aside>
-      <div className="customer-main">
-        <main className="customer-content">
+    <main className="customer-content">
           <section className="customer-welcome">
             <div>
               <div className="eyebrow">
@@ -143,7 +101,7 @@ const CustomerWorkspace = () => {
             <section className="customer-panel customer-enquiries-panel">
               <div className="customer-panel-heading">
                 <h2>Recent enquiries</h2>
-                <Link to="/customer-dashboard">View all 
+                <Link to="/customer/dashboard">View all 
 
                   <i className="bi bi-arrow-right"></i>
                 </Link>
@@ -171,7 +129,7 @@ const CustomerWorkspace = () => {
                       </td>
                       <td>$50,900</td>
                       <td>
-                        <Link className="customer-details-button" to="/enquiry-details?id=NL-ENQ-10482">Details 
+                        <Link className="customer-details-button" to="/customer/enquiry-details?id=NL-ENQ-10482">Details 
 
                           <i className="bi bi-arrow-up-right"></i>
                         </Link>
@@ -188,7 +146,7 @@ const CustomerWorkspace = () => {
                       </td>
                       <td>$78,500</td>
                       <td>
-                        <Link className="customer-details-button" to="/quotation-details?id=NL-Q-2026-0419">Details 
+                        <Link className="customer-details-button" to="/customer/quotation-details?id=NL-Q-2026-0419">Details 
 
                           <i className="bi bi-arrow-up-right"></i>
                         </Link>
@@ -205,7 +163,7 @@ const CustomerWorkspace = () => {
                       </td>
                       <td>$108,600</td>
                       <td>
-                        <Link className="customer-details-button" to="/quotation-details?id=NL-Q-2026-0382">Details 
+                        <Link className="customer-details-button" to="/customer/quotation-details?id=NL-Q-2026-0382">Details 
 
                           <i className="bi bi-arrow-up-right"></i>
                         </Link>
@@ -220,7 +178,7 @@ const CustomerWorkspace = () => {
                 <h2>Quick links</h2>
               </div>
               <div className="customer-quicklinks">
-                <Link to="/my-quotations">
+                <Link to="/customer/quotations">
                   <i className="bi bi-file-earmark-check"></i> Review latest quotation 
 
                   <i className="bi bi-arrow-up-right"></i>
@@ -245,9 +203,7 @@ const CustomerWorkspace = () => {
           </div>
           <p className="summary-note">Sample customer workspace. Account records and authentication are not connected in this static preview.</p>
         </main>
-      </div>
-    </div>
-  )
-}
+  );
+};
 
-export default CustomerWorkspace
+export default CustomerWorkspace;

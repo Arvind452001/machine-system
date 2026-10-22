@@ -19,7 +19,7 @@ const Contact = () => {
           </div>
           <h1>Talk to a 
 
-            <em>specialist.</em>
+            <em> specialist.</em>
           </h1>
           <p>Tell us what you are making and our team will help you find the right next step.</p>
         </div>
