@@ -50,6 +50,16 @@ const Enquiry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isAuthenticated) {
+      showErrorAlert(
+        "Customer Sign-In Required",
+        "You must be logged in to submit an enquiry so your assigned representative can track it in your customer portal."
+      );
+      navigate("/login", { state: { from: `/enquiry${window.location.search}` } });
+      return;
+    }
+
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
