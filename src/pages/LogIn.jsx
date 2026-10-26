@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { showErrorAlert, showSuccessAlert } from "../utils/alert";
 
 const LogIn = () => {
   const { user, isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [role, setRole] = useState("customer");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   // If already logged in, do not show login page - redirect straight to dashboard
   if (isAuthenticated) {
@@ -16,31 +23,23 @@ const LogIn = () => {
     return <Navigate to={targetDashboard} replace />;
   }
 
-  const [role, setRole] = useState("customer");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
-
   const isCustomer = role === "customer";
-
-  const handleRoleChange = (selectedRole) => {
-    setRole(selectedRole);
-    setErrorMessage("");
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
 
     if (!email.trim() || !password.trim()) {
-      setErrorMessage("Please enter both work email and password.");
+      const msg = "Please enter both work email and password.";
+      setErrorMessage(msg);
+      showErrorAlert("Validation Error", msg);
       return;
     }
 
     const result = await login(email, password, role);
 
     if (result.success) {
+      await showSuccessAlert("Welcome Back", "Authentication successful.");
       const fromPath = location.state?.from?.pathname;
       const defaultDashboard =
         result.user.role === "representative"
@@ -54,7 +53,9 @@ const LogIn = () => {
 
       navigate(validDestination, { replace: true });
     } else {
-      setErrorMessage(result.message);
+      const failMsg = result.message || "Login failed. Please verify credentials.";
+      setErrorMessage(failMsg);
+      showErrorAlert("Login Failed", failMsg);
     }
   };
 

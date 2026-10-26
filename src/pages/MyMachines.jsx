@@ -1,116 +1,161 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { machinesApi } from "../api/machinesApi";
+
 const MyMachines = () => {
+  const [machines, setMachines] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    machinesApi
+      .getMachines()
+      .then((res) => {
+        if (mounted && Array.isArray(res?.data) && res.data.length > 0) {
+          setMachines(res.data);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load machines:", err.message);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <main className="customer-content account-hub my-machines-page">
-          <div className="page-crumb">
-            <Link to="/customer/dashboard">
-              <i className="bi bi-arrow-left"></i> My workspace
-
-            </Link>
-            <span>/</span>
-            <span>My machines</span>
+      <div className="page-crumb">
+        <Link to="/customer/dashboard">
+          <i className="bi bi-arrow-left"></i> My workspace
+        </Link>
+        <span>/</span>
+        <span>My machines</span>
+      </div>
+      <section className="page-heading">
+        <div>
+          <div className="eyebrow">
+            <span></span> YOUR MACHINES
           </div>
-          <section className="page-heading">
-            <div>
-              <div className="eyebrow">
-                <span></span> YOUR MACHINES
+          <h1>
+            Machines for <em> your work.</em>
+          </h1>
+          <p>
+            Explore production platforms and pick up a configuration when you
+            are ready.
+          </p>
+        </div>
+        <Link className="button button-dark" to="/machines">
+          Full catalogue <i className="bi bi-arrow-right"></i>
+        </Link>
+      </section>
+      <div className="account-notice">
+        <i className="bi bi-info-circle"></i>
+        <span>
+          Showing live machine platforms from MACHINE Systems catalogue.
+        </span>
+      </div>
 
-              </div>
-              <h1>Machines for 
+      <section className="my-machines-grid">
+        {machines.length > 0 ? (
+          machines.map((m) => {
+            const img =
+              m.images?.[0] ||
+              "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
+            const tag = `${m.sku || m.slug?.toUpperCase() || "MS"} · ${(
+              m.category || "CNC"
+            ).toUpperCase()}`;
+            const price = m.basePrice
+              ? `$${Number(m.basePrice).toLocaleString()}`
+              : "Contact";
 
-                <em> your work.</em>
-              </h1>
-              <p>Explore your saved platforms and pick up a configuration when you are ready.</p>
-            </div>
-            <Link className="button button-dark" to="/machines">Full catalogue 
-
-              <i className="bi bi-arrow-right"></i>
-            </Link>
-          </section>
-          <div className="account-notice">
-            <i className="bi bi-info-circle"></i>
-            <span>Your recently viewed machines. Sign in to save machines to your account.</span>
+            return (
+              <Link
+                key={m._id || m.slug}
+                className="my-machine-card"
+                to={`/machine-details?id=${m.slug || m._id}`}
+              >
+                <div className="my-machine-image">
+                  <img src={img} alt={m.name} loading="lazy" />
+                  <span>{tag}</span>
+                  <i className="bi bi-arrow-up-right"></i>
+                </div>
+                <div className="my-machine-copy">
+                  <small>
+                    {m.summary || m.category?.toUpperCase() || "PLATFORM"}
+                  </small>
+                  <h2>{m.name}</h2>
+                  <p>
+                    {m.description
+                      ? m.description.length > 90
+                        ? `${m.description.slice(0, 90)}...`
+                        : m.description
+                      : "Compact, accurate machining platform for flexible production."}
+                  </p>
+                  <div>
+                    <span>
+                      From <strong>{price}</strong>
+                    </span>
+                    <span>
+                      View machine <i className="bi bi-arrow-right"></i>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })
+        ) : loading ? (
+          <div
+            style={{
+              padding: "32px",
+              textAlign: "center",
+              gridColumn: "1 / -1",
+              color: "#6b7c72",
+            }}
+          >
+            Loading machine platforms...
           </div>
-          <section className="my-machines-grid">
-            <Link className="my-machine-card" to="/machine-details#axis-400">
-              <div className="my-machine-image">
-                <img src="https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&amp;fmt=webp" alt="Axis 400 precision CNC lathe"/>
-                <span>AX-400 · CNC TURNING</span>
-                <i className="bi bi-arrow-up-right"></i>
-              </div>
-              <div className="my-machine-copy">
-                <small>PRECISION CNC LATHE</small>
-                <h2>Axis 400</h2>
-                <p>Compact, accurate turning for flexible production.</p>
-                <div>
-                  <span>From 
-
-                    <strong>$48,500</strong>
-                  </span>
-                  <span>View machine 
-
-                    <i className="bi bi-arrow-right"></i>
-                  </span>
-                </div>
-              </div>
-            </Link>
-            <Link className="my-machine-card" to="/machine-details#arc-700">
-              <div className="my-machine-image">
-                <img src="https://assets.haascnc.com/is/image/haascnc/VF-2SS?wid=1000&amp;fmt=webp" alt="Arc 700 vertical machining centre"/>
-                <span>AR-700 · CNC MILLING</span>
-                <i className="bi bi-arrow-up-right"></i>
-              </div>
-              <div className="my-machine-copy">
-                <small>VERTICAL MACHINING CENTRE</small>
-                <h2>Arc 700</h2>
-                <p>Rigid, versatile machining for demanding parts.</p>
-                <div>
-                  <span>From 
-
-                    <strong>$72,400</strong>
-                  </span>
-                  <span>View machine 
-
-                    <i className="bi bi-arrow-right"></i>
-                  </span>
-                </div>
-              </div>
-            </Link>
-            <Link className="my-machine-card" to="/machine-details#flare-6">
-              <div className="my-machine-image">
-                <img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="Flare 6 fiber laser system"/>
-                <span>FL-6000 · LASER</span>
-                <i className="bi bi-arrow-up-right"></i>
-              </div>
-              <div className="my-machine-copy">
-                <small>FIBER LASER SYSTEM</small>
-                <h2>Flare 6</h2>
-                <p>Fast, reliable sheet processing for production teams.</p>
-                <div>
-                  <span>From 
-
-                    <strong>$96,300</strong>
-                  </span>
-                  <span>View machine 
-
-                    <i className="bi bi-arrow-right"></i>
-                  </span>
-                </div>
-              </div>
-            </Link>
-          </section>
-          <div className="account-bottom">
-            <span className="account-help">
-              <i className="bi bi-sliders"></i> Have a machine in mind? 
-
-              <Link to="/configure">Build a configuration</Link>
-            </span>
-            <Link className="button button-lime" to="/machines">Browse all machines 
-
-              <i className="bi bi-arrow-right"></i>
+        ) : (
+          <div
+            style={{
+              padding: "48px 24px",
+              textAlign: "center",
+              gridColumn: "1 / -1",
+              background: "#fff",
+              borderRadius: "12px",
+              border: "1px solid #e1e6e0",
+              color: "#6b7c72",
+            }}
+          >
+            <i
+              className="bi bi-gear-wide-connected mb-3 d-block"
+              style={{ fontSize: "2.5rem", color: "#c94f2d" }}
+            ></i>
+            <h3 style={{ color: "#173f35" }}>No machine platforms found</h3>
+            <p style={{ maxWidth: "440px", margin: "8px auto 20px", fontSize: "14px" }}>
+              There are currently no machines assigned to your profile. Explore our complete catalogue to view and configure systems.
+            </p>
+            <Link className="button button-lime" to="/machines">
+              Explore Catalogue <i className="bi bi-arrow-right ms-2"></i>
             </Link>
           </div>
-        </main>
+        )}
+      </section>
+
+      <div className="account-bottom">
+        <span className="account-help">
+          <i className="bi bi-sliders"></i> Have a machine in mind?{" "}
+          <Link to="/configure">Build a configuration</Link>
+        </span>
+        <Link className="button button-lime" to="/machines">
+          Browse all machines <i className="bi bi-arrow-right"></i>
+        </Link>
+      </div>
+    </main>
   );
 };
 

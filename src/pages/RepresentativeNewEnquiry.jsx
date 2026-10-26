@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { enquiriesApi } from "../api/enquiriesApi";
+import { machinesApi } from "../api/machinesApi";
+import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 
 const RepresentativeNewEnquiry = () => {
   const navigate = useNavigate();
+  const [machinesList, setMachinesList] = useState([]);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -17,18 +21,64 @@ const RepresentativeNewEnquiry = () => {
     notes: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    machinesApi
+      .getMachines()
+      .then((res) => {
+        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (items.length > 0) {
+          setMachinesList(items);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load machines for new enquiry dropdown:", err.message);
+      });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      navigate("/representative/enquiries");
-    }, 1200);
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      await enquiriesApi.createEnquiry({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        location: formData.location,
+        machine: formData.machine,
+        quantity: Number(formData.quantity) || 1,
+        timeline: formData.timeline,
+        status: formData.status,
+        notes: formData.notes,
+        subject: `Territory Enquiry for ${formData.machine}`,
+        message: formData.notes || `Representative enquiry logged for ${formData.company}`,
+      });
+      setSubmitted(true);
+      showSuccessAlert(
+        "Enquiry Created",
+        `New customer enquiry for ${formData.company || "customer"} was successfully registered.`
+      );
+      setTimeout(() => {
+        navigate("/representative/enquiries");
+      }, 1200);
+    } catch (err) {
+      const msg = err.message || "Failed to create enquiry. Please check the fields.";
+      setErrorMsg(msg);
+      showErrorAlert("Creation Failed", msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,6 +127,26 @@ const RepresentativeNewEnquiry = () => {
           <span>
             Enquiry created successfully! Redirecting to assigned enquiries queue...
           </span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div
+          style={{
+            background: "#fdf2f2",
+            color: "#991b1b",
+            padding: "14px 18px",
+            borderRadius: "4px",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            fontSize: "12px",
+            fontWeight: 500,
+          }}
+        >
+          <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "16px" }}></i>
+          <span>{errorMsg}</span>
         </div>
       )}
 
@@ -183,16 +253,18 @@ const RepresentativeNewEnquiry = () => {
                 onChange={handleChange}
               >
                 <option value="">Select a machine</option>
-                <option value="Axis 400 · CNC lathe">
-                  Axis 400 · CNC lathe
-                </option>
-                <option value="Arc 700 · Vertical machining centre">
-                  Arc 700 · Vertical machining centre
-                </option>
-                <option value="Flare 6 · Fiber laser">
-                  Flare 6 · Fiber laser
-                </option>
-                <option value="Other / not sure">Other / not sure</option>
+                {machinesList.length > 0 ? (
+                  machinesList.map((m) => {
+                    const val = `${m.name || m.title || "Machine"} · ${m.category || "General"}`;
+                    return (
+                      <option key={m._id || m.slug} value={val}>
+                        {val}
+                      </option>
+                    );
+                  })
+                ) : (
+                  <option value="" disabled>Loading machines from live database...</option>
+                )}
               </select>
             </label>
             <label>
@@ -258,8 +330,8 @@ const RepresentativeNewEnquiry = () => {
           >
             <i className="bi bi-x-lg"></i> Cancel
           </Link>
-          <button className="button button-dark" type="submit">
-            <i className="bi bi-check2"></i> Create enquiry
+          <button className="button button-dark" type="submit" disabled={loading}>
+            <i className="bi bi-check2"></i> {loading ? "Creating enquiry..." : "Create enquiry"}
           </button>
         </div>
       </form>

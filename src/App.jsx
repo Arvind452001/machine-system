@@ -184,7 +184,7 @@ function App() {
               <Route path="enquiry-details" element={<EnquiryDetails />} />
               <Route path="quotations" element={<MyQuotations />} />
               <Route path="quotation-details" element={<QuotationDetails />} />
-              <Route path="quotation-example" element={<QuotationExample />} />
+              <Route path="quotation-example" element={<Navigate to="/customer/quotations" replace />} />
               <Route path="machines" element={<MyMachines />} />
               <Route path="profile" element={<ProfileSettings />} />
             </Route>
@@ -201,7 +201,7 @@ function App() {
           <Route path="/enquiries-details" element={<Navigate to="/customer/enquiry-details" replace />} />
           <Route path="/my-quotations" element={<Navigate to="/customer/quotations" replace />} />
           <Route path="/quotation-details" element={<Navigate to="/customer/quotation-details" replace />} />
-          <Route path="/quotation-example" element={<Navigate to="/customer/quotation-example" replace />} />
+          <Route path="/quotation-example" element={<Navigate to="/customer/quotations" replace />} />
           <Route path="/my-machines" element={<Navigate to="/customer/machines" replace />} />
           <Route path="/profile-settings" element={<Navigate to="/customer/profile" replace />} />
 
@@ -252,3 +252,7 @@ function App() {
 }
 
 export default App;
+
+
+
+

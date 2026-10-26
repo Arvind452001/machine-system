@@ -1,27 +1,76 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { authApi } from "../api/authApi";
+import { useAuth } from "../context/AuthContext";
+import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 
 const RepresentativeProfile = () => {
+  const { user } = useAuth();
   const [profile, setProfile] = useState({
-    name: "Alex Morgan",
-    role: "Country Representative",
-    email: "alex.morgan@machinesystems.example",
-    phone: "+1 (312) 555-0100",
-    region: "United States",
-    territory: "Central",
-    timezone: "Central Time (US & Canada)",
+    name: user?.name || "",
+    role: user?.jobRole || user?.role || "Representative",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    region: user?.region || user?.country || "United States",
+    territory: user?.territory || "Central",
+    timezone: user?.timezone || "UTC",
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    authApi
+      .getMe()
+      .then((res) => {
+        if (mounted && (res?.data || res?.user)) {
+          const u = res.data?.user || res.data || res.user || res;
+          setProfile({
+            name: u.name || "",
+            role: u.jobRole || (u.role === "representative" ? "Country Representative" : u.role) || "Representative",
+            email: u.email || "",
+            phone: u.phone || "",
+            region: u.country || u.region || "United States",
+            territory: u.territory || "Territory",
+            timezone: u.timezone || "UTC",
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to fetch rep profile:", err.message);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    try {
+      await authApi.updateProfile({
+        name: profile.name,
+        phone: profile.phone,
+        country: profile.region,
+        region: profile.region,
+        territory: profile.territory,
+        timezone: profile.timezone,
+        jobRole: profile.role,
+      });
+      setSaved(true);
+      showSuccessAlert("Profile Updated", "Your representative profile details have been saved.");
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      showErrorAlert("Save Failed", err.message || "Failed to update profile details.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -193,8 +242,8 @@ const RepresentativeProfile = () => {
           >
             <i className="bi bi-arrow-left"></i> Back to overview
           </Link>
-          <button className="button button-dark" type="submit">
-            <i className="bi bi-check2"></i> Save profile
+          <button className="button button-dark" type="submit" disabled={saving}>
+            <i className="bi bi-check2"></i> {saving ? "Saving..." : "Save profile"}
           </button>
         </div>
       </form>

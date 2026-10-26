@@ -7,8 +7,8 @@ const CarouselInitializer = () => {
   useEffect(() => {
     const cleanups = [];
 
-    // Small delay to ensure current page DOM has mounted
-    const timer = setTimeout(() => {
+    // Initialize all carousels on page
+    const initCarousels = () => {
       // 1. Initialize all [data-carousel] components
       const carousels = document.querySelectorAll("[data-carousel]");
       carousels.forEach((carousel) => {
@@ -131,10 +131,14 @@ const CarouselInitializer = () => {
           relNext?.removeEventListener("click", onRelNext);
         });
       }
-    }, 50);
+    };
+
+    const timer = setTimeout(initCarousels, 50);
+    window.addEventListener("refresh-carousels", initCarousels);
 
     return () => {
       clearTimeout(timer);
+      window.removeEventListener("refresh-carousels", initCarousels);
       cleanups.forEach((fn) => fn());
     };
   }, [pathname]);

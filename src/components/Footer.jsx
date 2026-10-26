@@ -26,12 +26,12 @@ const Footer = () => {
           <div className="footer-column">
             <h3>Explore</h3>
             <Link to="/machines">Machine catalogue</Link>
-            <Link to="/machine-details#axis-400">Axis 400</Link>
-            <Link to="/machine-details#arc-700">Arc 700</Link>
+            <Link to="/machines">Browse all machinery</Link>
+            <Link to="/configure">Machine configurator</Link>
           </div>
           <div className="footer-column">
             <h3>Your project</h3>
-            <Link to="/configure#axis-config">Configure a machine</Link>
+            <Link to="/configure">Configure a machine</Link>
             <Link to="/basket">Basket</Link>
             <Link to="/enquiry">Send an enquiry</Link>
             <Link to="/customer-dashboard">Enquiry history</Link>

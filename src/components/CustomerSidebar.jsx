@@ -58,7 +58,7 @@ const CustomerSidebar = () => {
       </nav>
       <div className="customer-sidebar-note">
         <i className="bi bi-person-check"></i>
-        <span>Customer Account · {user?.name || "Morgan Chen"}</span>
+        <span>Customer Account{user?.name ? ` · ${user.name}` : ""}</span>
       </div>
     </aside>
   );

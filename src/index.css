@@ -367,7 +367,7 @@ img[src*="assets.haascnc.com"] {
 .faq-list summary { display: flex; align-items: center; justify-content: space-between; gap: 15px; cursor: pointer; list-style: none; font-size: 10px; font-weight: 500; }
 .faq-list summary::-webkit-details-marker { display: none; }
 .faq-list summary i { color: var(--orange); font-size: 15px; transition: transform .2s; }
-.faq-list details[open] summary i { transform: rotate(45deg); }
+.faq-list details.is-open summary i { transform: rotate(45deg); }
 .faq-list details p { max-width: 600px; margin: 11px 25px 0 0; color: #748078; font-size: 8px; line-height: 1.8; }
 .faq-section {
   grid-template-columns: minmax(250px, .78fr) minmax(0, 1.22fr);
@@ -390,14 +390,52 @@ img[src*="assets.haascnc.com"] {
 .faq-contact strong { color: white; font-size: 9px !important; font-weight: 500; }
 .faq-contact > i:last-child { margin-left: auto; color: var(--lime); }
 .faq-list { display: grid; gap: 9px; border-top: 0; }
-.faq-list details { padding: 0; border: 1px solid #ffffff6b; border-left: 3px solid transparent; background: white; color: var(--ink); transition: border-color .2s ease, transform .2s ease; }
+.faq-list details {
+  padding: 0;
+  border: 1px solid #ffffff6b;
+  border-left: 3px solid transparent;
+  background: white;
+  color: var(--ink);
+  transition: border-color .3s ease, border-left-color .4s cubic-bezier(0.16, 1, 0.3, 1), transform .25s ease;
+  overflow: hidden;
+}
 .faq-list details:hover { transform: translateX(2px); border-color: #ffffff; }
-.faq-list details[open] { border-left-color: var(--orange); }
-.faq-list summary { min-height: 64px; padding: 13px 17px; display: grid; grid-template-columns: 28px minmax(0, 1fr) 20px; gap: 12px; font-size: 11px !important; }
+.faq-list details.is-open { border-left-color: var(--orange); }
+.faq-list summary {
+  min-height: 64px;
+  padding: 13px 17px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 20px;
+  gap: 12px;
+  font-size: 11px !important;
+  cursor: pointer;
+  user-select: none;
+}
 .faq-number { color: #b85b3e; font-size: 8px !important; font-weight: 600; letter-spacing: .04em; }
 .faq-question { color: var(--ink); font-size: 11px !important; font-weight: 500; line-height: 1.5; }
-.faq-list summary i { justify-self: end; color: var(--forest); font-size: 16px; }
-.faq-list details[open] summary i { color: #b85b3e; }
+.faq-list summary i {
+  justify-self: end;
+  color: var(--forest);
+  font-size: 16px;
+  transition: transform .45s cubic-bezier(0.16, 1, 0.3, 1), color .35s ease;
+}
+.faq-list details.is-open summary i {
+  transform: rotate(45deg);
+  color: #b85b3e;
+}
+.faq-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+.faq-list details.is-open .faq-collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.faq-collapse-inner {
+  overflow: hidden;
+}
 .faq-list details p { max-width: none; margin: 0 17px 17px 57px; padding-top: 11px; border-top: 1px solid var(--line); color: #647168; font-size: 9px !important; line-height: 1.8; }
 @media (max-width: 900px) {
   .faq-section { grid-template-columns: minmax(210px, .75fr) minmax(0, 1.25fr); gap: 5%; }
@@ -707,15 +745,6 @@ img[src*="assets.haascnc.com"] {
 }
 .catalog-layout .catalog-main {
   padding: 0;
-}
-.catalog-layout:has(#category-cnc:checked) .machine-card:not([data-category~="cnc"]),
-.catalog-layout:has(#category-turning:checked) .machine-card:not([data-category~="turning"]),
-.catalog-layout:has(#category-milling:checked) .machine-card:not([data-category~="milling"]),
-.catalog-layout:has(#category-laser:checked) .machine-card:not([data-category~="laser"]),
-.catalog-layout:has(#price-under-75:checked) .machine-card:not([data-price~="under-75"]),
-.catalog-layout:has(#price-75-125:checked) .machine-card:not([data-price~="75-125"]),
-.catalog-layout:has(#price-over-125:checked) .machine-card:not([data-price~="over-125"]) {
-  display: none;
 }
 @media (max-width: 900px) {
   .catalog-layout {
@@ -3463,11 +3492,8 @@ body.customer-dashboard-page > .site-header,
         max-width: 90%;
     }
 
-/* Static, hash-selected machine details (no page-rendering JavaScript) */
-.machine-static-detail { display: none; }
-#axis-400 { display: block; }
-.machine-static-detail:target { display: block; }
-body:has(.machine-static-detail:target) #axis-400:not(:target) { display: none; }
+/* Static and dynamic machine details */
+.machine-static-detail { display: block; }
 .machine-static-detail .machine-profile { margin-bottom: 24px; }
 .machine-static-detail .machine-information { margin: 0 0 48px; }
 .machine-static-detail .machine-information-panel h3 { max-width: 360px; margin: 13px 0 10px; color: #202d24; font-size: 25px; font-weight: 500; line-height: 1.35; }
@@ -3553,8 +3579,177 @@ body:has(.machine-static-detail:target) #axis-400:not(:target) { display: none; 
 }
 
 /* Functional configurator and basket states */
-.configure-layout { display: none !important; }
-.configure-layout:target { display: grid !important; }
-body:not(:has(.configure-layout:target)) #axis-config { display: grid !important; }
+.configure-layout { display: grid !important; }
+
+/* Machine Catalog Pagination & Dynamic Filters */
+.catalog-pagination-wrap {
+  margin-top: 40px;
+  padding: 24px 0 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pagination-limit-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-limit-selector select {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.pagination-limit-selector select:hover,
+.pagination-limit-selector select:focus {
+  border-color: var(--orange);
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s ease;
+  user-select: none;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--orange);
+  background: #fff6f3;
+  color: var(--orange);
+}
+
+.pagination-btn.active {
+  border-color: var(--orange);
+  background: var(--orange);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: #e5e9e5;
+  background: #f9faf8;
+  color: #a0aba2;
+}
+
+.pagination-ellipsis {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.category-filter {
+  transition: color 0.15s ease;
+}
+
+.category-filter:hover span {
+  color: var(--orange);
+}
+
+.category-filter input {
+  cursor: pointer;
+}
+
+.category-filter input:checked + span {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.catalog-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  width: 100%;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  grid-column: 1 / -1;
+}
+
+.catalog-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(201, 79, 45, 0.15);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spinCatalog 0.8s linear infinite;
+}
+
+@keyframes spinCatalog {
+  to { transform: rotate(360deg); }
+}
+
+.no-machines-found {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+.no-machines-found i {
+  font-size: 36px;
+  color: var(--orange);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.no-machines-found h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.no-machines-found p {
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 18px;
+}
+
+
 
 

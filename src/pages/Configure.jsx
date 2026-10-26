@@ -1,304 +1,514 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { machinesApi } from "../api/machinesApi";
+import { optionsApi } from "../api/optionsApi";
+import { BASE_URL } from "../api/axiosInstance";
+
+// Helper to resolve backend image paths
+const resolveImageUrl = (img) => {
+  if (!img || img === "string") {
+    return "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80";
+  }
+  if (img.startsWith("http://") || img.startsWith("https://")) {
+    return img;
+  }
+  const cleanBase = (BASE_URL || "https://node.aitechnotech.in/machine").replace(
+    /\/+$/,
+    ""
+  );
+  const cleanPath = img.startsWith("/") ? img : `/${img}`;
+  return `${cleanBase}${cleanPath}`;
+};
+
+// Helper to extract options grouped by category from either optionsByCategory or availableOptions
+const extractOptionsByCategory = (m) => {
+  if (!m) return {};
+
+  // Case 1: Backend provides optionsByCategory object { spindle: [...], tooling: [...], ... }
+  if (
+    m.optionsByCategory &&
+    typeof m.optionsByCategory === "object" &&
+    Object.keys(m.optionsByCategory).length > 0
+  ) {
+    const groups = {};
+    Object.entries(m.optionsByCategory).forEach(([category, optionsList]) => {
+      if (Array.isArray(optionsList) && optionsList.length > 0) {
+        groups[category.toLowerCase()] = optionsList.filter(
+          (o) => o && o.isActive !== false
+        );
+      }
+    });
+    return groups;
+  }
+
+  // Case 2: Backend provides availableOptions array
+  if (Array.isArray(m.availableOptions) && m.availableOptions.length > 0) {
+    const groups = {};
+    m.availableOptions.forEach((o) => {
+      if (!o || o.isActive === false) return;
+      const cat = (o.category || "options").toLowerCase();
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(o);
+    });
+    return groups;
+  }
+
+  return {};
+};
+
 const Configure = () => {
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+
+  // Machine slug or ID from query params or URL hash
+  const machineParam =
+    searchParams.get("machine") ||
+    searchParams.get("id") ||
+    searchParams.get("slug") ||
+    location.hash.replace("#", "").replace("-config", "") ||
+    "ms-m500";
+
+  const [machine, setMachine] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [ruleValidation, setRuleValidation] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+
+    machinesApi
+      .getMachine(machineParam)
+      .then((res) => {
+        if (!mounted || !res) return;
+        const m = res.data || res;
+        setMachine(m);
+
+        // Group available options dynamically from API response
+        const groups = extractOptionsByCategory(m);
+
+        const initial = {};
+        Object.entries(groups).forEach(([catKey, catOpts]) => {
+          const defaultOpt =
+            catOpts.find((o) => o.isDefault) ||
+            catOpts.find((o) => Number(o.priceDelta || 0) === 0);
+          if (defaultOpt) {
+            initial[catKey] = defaultOpt._id || defaultOpt.code;
+          } else {
+            initial[catKey] = "none";
+          }
+        });
+
+        setSelectedOptions(initial);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch machine for configurator:", err.message);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [machineParam]);
+
+  // Group options dynamically by category from machine data
+  const groupedCategories = extractOptionsByCategory(machine);
+  const categoryEntries = Object.entries(groupedCategories);
+  const allAvailableOptions = Object.values(groupedCategories).flat();
+
+  // Real-time rule engine validation (POST /api/v1/options/validate)
+  useEffect(() => {
+    if (!machine && !machineParam) return;
+    const targetId = machine?._id || machineParam;
+
+    const selectedCodes = Object.values(selectedOptions)
+      .filter((id) => id && id !== "none")
+      .map(
+        (id) =>
+          allAvailableOptions.find((o) => (o._id || o.code) === id)?.code
+      )
+      .filter(Boolean);
+
+    if (selectedCodes.length === 0) {
+      setRuleValidation(null);
+      return;
+    }
+
+    optionsApi
+      .validateOptions({
+        machineId: targetId,
+        optionCodes: selectedCodes,
+      })
+      .then((res) => {
+        setRuleValidation(res);
+      })
+      .catch((err) => {
+        console.warn("Could not validate options rules:", err.message);
+      });
+  }, [machine, selectedOptions, machineParam]);
+
+  // Fallbacks if machine data is still loading or using default
+  const machineName = machine?.name ;
+  const machineSku =
+    machine?.sku || machine?.slug?.toUpperCase() ;
+  const machineCategory = (machine?.category || "MILLING").toUpperCase();
+  const machineSummary =
+    machine?.summary ||
+    machine?.description?.slice(0, 120) ||
+    "Production-ready systems with room to make them your own.";
+  const basePrice = Number(machine?.basePrice) || 0;
+
+  const imagesList =
+    machine?.images &&
+    machine.images.length > 0 &&
+    machine.images[0] !== "string"
+      ? machine.images
+      : [
+          "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+        ];
+  const machineImage = resolveImageUrl(imagesList[0]);
+
+  // Calculate live total price from selected options
+  const optionsPriceDelta = Object.entries(selectedOptions).reduce(
+    (total, [catKey, selectedId]) => {
+      if (!selectedId || selectedId === "none") return total;
+      const opt = (groupedCategories[catKey] || []).find(
+        (o) => (o._id || o.code) === selectedId
+      );
+      return total + (Number(opt?.priceDelta) || 0);
+    },
+    0
+  );
+
+  const totalPrice = basePrice + optionsPriceDelta;
+
+  const handleCategorySelect = (category, optId) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [category]: optId,
+    }));
+  };
+
+  const categoryLabels = {
+    spindle: "Spindle package",
+    tooling: "Tool changer & magazine",
+    cooling: "Cooling",
+    enclosure: "Enclosure & safety",
+    automation: "Automation & robotics interface",
+    control: "Control unit & software",
+    service: "Service & warranty",
+    options: "Additional options",
+  };
+
   return (
     <div>
-       <main>
-      <div className="page-crumb">
-        <Link to="/machine-details#axis-400">
-          <i className="bi bi-arrow-left"></i> Machine overview
-
-        </Link>
-        <span>/</span>
-        <span>Configure</span>
-      </div>
-      <section className="configure-heading">
-        <div>
-          <div className="eyebrow">
-            <span></span> Build your specification
-
-          </div>
-          <h1>Make it 
-
-            <em> work harder.</em>
-          </h1>
-          <p>Compare platform options and find the right starting specification.</p>
+      <main>
+        <div className="page-crumb">
+          <Link to={`/machine-details?id=${machine?.slug || machineParam}`}>
+            <i className="bi bi-arrow-left"></i> Machine overview
+          </Link>
+          <span>/</span>
+          <span>Configure: {machineName}</span>
         </div>
-        <div className="build-code">
-          <span>CONFIGURATION PREVIEW</span>
-          <strong>AXIS 400 · AX-400</strong>
-        </div>
-      </section>
-      <div className="stepper">
-        <span className="active">
-          <b>01</b> Configure
 
-        </span>
-        <i></i>
-        <span>
-          <b>02</b> Review basket
-
-        </span>
-        <i></i>
-        <span>
-          <b>03</b> Send enquiry
-
-        </span>
-      </div>
-      <section className="configure-layout" id="axis-config">
-        <div className="options-panel">
-          <div className="panel-kicker">
-            <span>AXIS 400 · SPECIFICATION</span>
-            <span>04 OPTIONS</span>
-          </div>
-          <h2>Precision CNC lathe</h2>
-          <p className="options-intro">Choose a starting specification. Final compatibility is confirmed with your representative.</p>
-          <div className="option-group">
-            <label htmlFor="axis-spindle">01 &nbsp; Spindle package 
-
-              <small>Choose your speed</small>
-            </label>
-            <select className="option-select" id="axis-spindle">
-              <option>Standard · 8,000 rpm</option>
-              <option>High torque · 10,000 rpm · +$3,200</option>
-              <option>High speed · 12,000 rpm · +$5,100</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="axis-tooling">02 &nbsp; Tooling system 
-
-              <small>Tool capacity</small>
-            </label>
-            <select className="option-select" id="axis-tooling">
-              <option>10-station turret</option>
-              <option>12-station live tooling · +$4,800</option>
-              <option>Servo turret · 16 station · +$7,600</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="axis-coolant">03 &nbsp; Coolant package 
-
-              <small>Chip management</small>
-            </label>
-            <select className="option-select" id="axis-coolant">
-              <option>Standard coolant</option>
-              <option>High-pressure · 70 bar · +$2,400</option>
-              <option>Through-spindle · 40 bar · +$3,900</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="axis-enclosure">04 &nbsp; Enclosure &amp; safety 
-
-              <small>Work environment</small>
-            </label>
-            <select className="option-select" id="axis-enclosure">
-              <option>Standard safety enclosure</option>
-              <option>Acoustic reduction · +$1,350</option>
-              <option>Full mist extraction · +$2,150</option>
-            </select>
-          </div>
-          <div className="compatibility-note">
-            <i className="bi bi-info-circle"></i>Final option compatibility is subject to engineering review.
-
-          </div>
-        </div>
-        <div className="preview-column">
-          <div className="preview-toolbar">
-            <span>
-              <i className="bi bi-eye"></i> CONFIGURATION PREVIEW
-
-            </span>
-            <span>REFERENCE RENDER</span>
-          </div>
-          <div className="preview-image">
-            <img src="https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1200&amp;fmt=webp" alt="Axis 400 industrial machine reference image"/>
-            <span>AX-400 · REFERENCE PLATFORM</span>
-            <strong className="preview-caption">Axis 400</strong>
-          </div>
-          <div className="price-box">
-            <div>
-              <span>INDICATIVE STARTING PRICE · USD</span>
-              <p>Base machine, before selected options</p>
+        <section className="configure-heading">
+          <div>
+            <div className="eyebrow">
+              <span></span> Build your specification
             </div>
-            <strong>$48,500</strong>
+            <h1>
+              Make it <em> work harder.</em>
+            </h1>
+            <p>
+              Compare platform options and find the right starting specification.
+            </p>
           </div>
-          <p className="price-note">Final price is confirmed by your regional sales representative.</p>
+          <div className="build-code">
+            <span>CONFIGURATION PREVIEW</span>
+            <strong>
+              {machineName} · {machineSku}
+            </strong>
+          </div>
+        </section>
+
+        <div className="stepper">
+          <span className="active">
+            <b>01</b> Configure
+          </span>
+          <i></i>
+          <span>
+            <b>02</b> Review basket
+          </span>
+          <i></i>
+          <span>
+            <b>03</b> Send enquiry
+          </span>
         </div>
-      </section>
-      <section className="configure-layout" id="arc-config">
-        <div className="options-panel">
-          <div className="panel-kicker">
-            <span>ARC 700 · SPECIFICATION</span>
-            <span>04 OPTIONS</span>
-          </div>
-          <h2>Vertical machining centre</h2>
-          <p className="options-intro">Build from the Arc 700 platform, then discuss your application with our team.</p>
-          <div className="option-group">
-            <label htmlFor="arc-spindle">01 &nbsp; Spindle package 
 
-              <small>Choose your speed</small>
-            </label>
-            <select className="option-select" id="arc-spindle">
-              <option>Standard · 8,000 rpm</option>
-              <option>High speed · 12,000 rpm · +$4,200</option>
-              <option>Precision · 18,000 rpm · +$7,900</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="arc-tooling">02 &nbsp; Tool changer 
-
-              <small>Tool capacity</small>
-            </label>
-            <select className="option-select" id="arc-tooling">
-              <option>24-tool carousel</option>
-              <option>40-tool magazine · +$3,900</option>
-              <option>60-tool magazine · +$7,200</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="arc-coolant">03 &nbsp; Coolant package 
-
-              <small>Chip management</small>
-            </label>
-            <select className="option-select" id="arc-coolant">
-              <option>Standard coolant</option>
-              <option>High-pressure · 70 bar · +$2,200</option>
-              <option>Through-spindle · 40 bar · +$4,100</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="arc-enclosure">04 &nbsp; Enclosure &amp; safety 
-
-              <small>Work environment</small>
-            </label>
-            <select className="option-select" id="arc-enclosure">
-              <option>Full safety enclosure</option>
-              <option>Acoustic reduction · +$1,750</option>
-            </select>
-          </div>
-          <div className="compatibility-note">
-            <i className="bi bi-info-circle"></i>Final option compatibility is subject to engineering review.
-
-          </div>
-        </div>
-        <div className="preview-column">
-          <div className="preview-toolbar">
-            <span>
-              <i className="bi bi-eye"></i> CONFIGURATION PREVIEW
-
-            </span>
-            <span>REFERENCE RENDER</span>
-          </div>
-          <div className="preview-image">
-            <img src="https://assets.haascnc.com/is/image/haascnc/VF-2SS?wid=1200&amp;fmt=webp" alt="Arc 700 industrial machining centre reference image"/>
-            <span>AR-700 · REFERENCE PLATFORM</span>
-            <strong className="preview-caption">Arc 700</strong>
-          </div>
-          <div className="price-box">
-            <div>
-              <span>INDICATIVE STARTING PRICE · USD</span>
-              <p>Base machine, before selected options</p>
+        {loading ? (
+          <div
+            style={{
+              padding: "60px 20px",
+              textAlign: "center",
+              color: "#6b7c72",
+              margin: "0 auto 40px",
+              maxWidth: "1200px",
+            }}
+          >
+            <div
+              className="spinner-border text-secondary mb-3"
+              role="status"
+              style={{ width: "2.5rem", height: "2.5rem" }}
+            ></div>
+            <div style={{ fontSize: "14px" }}>
+              Loading configurator options...
             </div>
-            <strong>$72,400</strong>
           </div>
-          <p className="price-note">Final price is confirmed by your regional sales representative.</p>
-        </div>
-      </section>
-      <section className="configure-layout" id="flare-config">
-        <div className="options-panel">
-          <div className="panel-kicker">
-            <span>FLARE 6 · SPECIFICATION</span>
-            <span>04 OPTIONS</span>
+        ) : !machine ? (
+          <div
+            style={{
+              padding: "60px 20px",
+              textAlign: "center",
+              color: "#6b7c72",
+              margin: "0 auto 40px",
+              maxWidth: "800px",
+              background: "#fff",
+              borderRadius: "12px",
+              border: "1px solid #e1e6e0",
+            }}
+          >
+            <i
+              className="bi bi-exclamation-circle text-warning mb-3 d-block"
+              style={{ fontSize: "2.5rem" }}
+            ></i>
+            <h3 style={{ color: "#173f35" }}>Machine Not Found</h3>
+            <p style={{ maxWidth: "480px", margin: "8px auto 24px" }}>
+              The requested machine could not be retrieved from the catalog. Please select a machine from the catalog.
+            </p>
+            <Link className="button button-dark" to="/machines">
+              Browse Machines <i className="bi bi-arrow-right ms-2"></i>
+            </Link>
           </div>
-          <h2>Fiber laser cutting system</h2>
-          <p className="options-intro">Review the laser platform. Power and handling are tailored to your material and throughput.</p>
-          <div className="option-group">
-            <label htmlFor="flare-power">01 &nbsp; Laser power 
+        ) : (
+          <section
+            className="configure-layout"
+            id="configure-panel"
+            style={{ display: "grid" }}
+          >
+            <div className="options-panel">
+              <div className="panel-kicker">
+                <span>
+                  {machineSku} · {machineCategory}
+                </span>
+                <span>
+                  {categoryEntries.length > 0
+                    ? `${String(categoryEntries.length).padStart(2, "0")} CATEGORIES`
+                    : "00 CATEGORIES"}
+                </span>
+              </div>
+              <h2>{machineName}</h2>
+              <p className="options-intro">{machineSummary}</p>
 
-              <small>Fiber source</small>
-            </label>
-            <select className="option-select" id="flare-power">
-              <option>3 kW fiber source</option>
-              <option>6 kW fiber source · +$14,800</option>
-              <option>12 kW fiber source · +$29,400</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="flare-handling">02 &nbsp; Material handling 
+              {categoryEntries.length > 0 ? (
+                categoryEntries.map(([categoryKey, opts], idx) => {
+                  const number = idx < 9 ? `0${idx + 1}` : `${idx + 1}`;
+                  const title =
+                    categoryLabels[categoryKey] ||
+                    categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
 
-              <small>Loading workflow</small>
-            </label>
-            <select className="option-select" id="flare-handling">
-              <option>Manual loading table</option>
-              <option>Twin shuttle table · +$9,600</option>
-              <option>Robot-ready interface · +$5,100</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="flare-extraction">03 &nbsp; Fume extraction 
+                  const currentSelectedId = selectedOptions[categoryKey] || "";
+                  const selectedOpt = opts.find(
+                    (o) => (o._id || o.code) === currentSelectedId
+                  );
 
-              <small>Air quality</small>
-            </label>
-            <select className="option-select" id="flare-extraction">
-              <option>Standard extraction</option>
-              <option>High-capacity filtration · +$3,200</option>
-              <option>Central extraction interface · +$4,600</option>
-            </select>
-          </div>
-          <div className="option-group">
-            <label htmlFor="flare-area">04 &nbsp; Cutting area 
+                  const hasFreeDefault = opts.some(
+                    (o) => o.isDefault || Number(o.priceDelta || 0) === 0
+                  );
 
-              <small>Sheet size</small>
-            </label>
-            <select className="option-select" id="flare-area">
-              <option>Standard · 3,000 Ã— 1,500 mm</option>
-              <option>Large format · 4,000 Ã— 2,000 mm · +$7,200</option>
-            </select>
-          </div>
-          <div className="compatibility-note">
-            <i className="bi bi-info-circle"></i>Final option compatibility is subject to engineering review.
+                  const displayLabel = selectedOpt
+                    ? selectedOpt.name
+                    : currentSelectedId === "none"
+                    ? "Standard (Included)"
+                    : opts[0]?.name || "Select option";
 
-          </div>
-        </div>
-        <div className="preview-column">
-          <div className="preview-toolbar">
-            <span>
-              <i className="bi bi-eye"></i> CONFIGURATION PREVIEW
+                  return (
+                    <div className="option-group" key={categoryKey}>
+                      <label htmlFor={`select-${categoryKey}`}>
+                        {number} &nbsp; {title}
+                        <small>{displayLabel}</small>
+                      </label>
+                      <select
+                        className="option-select"
+                        id={`select-${categoryKey}`}
+                        value={currentSelectedId}
+                        onChange={(e) =>
+                          handleCategorySelect(categoryKey, e.target.value)
+                        }
+                      >
+                        {!hasFreeDefault && (
+                          <option value="none">Standard / None (Included)</option>
+                        )}
+                        {opts.map((opt) => {
+                          const optValue = opt._id || opt.code;
+                          const delta = Number(opt.priceDelta || 0);
+                          const priceText =
+                            delta === 0
+                              ? " (Included)"
+                              : ` · +$${delta.toLocaleString()}`;
+                          return (
+                            <option key={optValue} value={optValue}>
+                              {opt.name}{priceText}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  );
+                })
+              ) : (
+                <div
+                  style={{
+                    padding: "36px 20px",
+                    textAlign: "center",
+                    background: "#fff",
+                    border: "1px dashed #d0d7d2",
+                    borderRadius: "8px",
+                    color: "#6b7c72",
+                    margin: "20px 0",
+                  }}
+                >
+                  <i
+                    className="bi bi-info-circle mb-2 d-block"
+                    style={{ fontSize: "1.5rem" }}
+                  ></i>
+                  <strong>No configurable options available for this machine.</strong>
+                  <p className="mt-1 mb-0" style={{ fontSize: "13px" }}>
+                    This machine platform is configured as a standard complete platform.
+                  </p>
+                </div>
+              )}
 
-            </span>
-            <span>REFERENCE RENDER</span>
-          </div>
-          <div className="preview-image">
-            <img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=1200&q=85" alt="Flare 6 laser system reference image"/>
-            <span>FL-6000 · REFERENCE PLATFORM</span>
-            <strong className="preview-caption">Flare 6</strong>
-          </div>
-          <div className="price-box">
-            <div>
-              <span>INDICATIVE STARTING PRICE · USD</span>
-              <p>Base machine, before selected options</p>
+              {ruleValidation && !ruleValidation.isValid && (
+                <div style={{ background: "#fde8e8", color: "#9b1c1c", border: "1px solid #f8b4b4", padding: "10px 14px", borderRadius: "6px", fontSize: "13px", marginTop: "14px" }}>
+                  <i className="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
+                  <strong>Configuration Rule Conflict:</strong>{" "}
+                  {(ruleValidation.conflicts || ruleValidation.missingRequirements || []).join(", ") || "Selected options have dependencies or incompatibilities."}
+                </div>
+              )}
+              {ruleValidation && ruleValidation.isValid && (
+                <div style={{ background: "#def7ec", color: "#03543f", border: "1px solid #84e1bc", padding: "8px 12px", borderRadius: "6px", fontSize: "12px", marginTop: "14px" }}>
+                  <i className="bi bi-check-circle-fill me-2 text-success"></i>
+                  <strong>Verified:</strong> All selected modules and packages pass engineering compatibility checks.
+                </div>
+              )}
+
+              <div className="compatibility-note">
+                <i className="bi bi-info-circle"></i>Final option compatibility
+                is validated by the rule engine (POST /api/v1/options/validate).
+              </div>
             </div>
-            <strong>$96,300</strong>
-          </div>
-          <p className="price-note">Final price is confirmed by your regional sales representative.</p>
-        </div>
-      </section>
-      <section className="home-contact" id="contact">
-        <div className="contact-mark">
-          <i className="bi bi-chat-square-text"></i>
-        </div>
-        <div>
-          <span className="eyebrow eyebrow-light">Ready to discuss your build?</span>
-          <h2>Take your specification further.</h2>
-        </div>
-        <p>Our team can confirm compatible options and prepare your final quote.</p>
-        <Link className="contact-action" to="/enquiry">Continue to enquiry 
 
-          <i className="bi bi-arrow-up-right"></i>
-        </Link>
-      </section>
-    </main>
+            <div className="preview-column">
+              <div className="preview-toolbar">
+                <span>
+                  <i className="bi bi-eye"></i> CONFIGURATION PREVIEW
+                </span>
+                <span>REAL-TIME QUOTE</span>
+              </div>
+              <div className="preview-image">
+                <img
+                  src={machineImage}
+                  alt={machineName}
+                  style={{ objectFit: "cover" }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80";
+                  }}
+                />
+                <span>
+                  {machineSku} · {machineCategory}
+                </span>
+                <strong className="preview-caption">{machineName}</strong>
+              </div>
+              <div className="price-box">
+                <div>
+                  <span>INDICATIVE CONFIGURED PRICE · USD</span>
+                  <p>
+                    Base ${basePrice.toLocaleString()} + options $
+                    {optionsPriceDelta.toLocaleString()}
+                  </p>
+                </div>
+                <strong>${totalPrice.toLocaleString()}</strong>
+              </div>
+              <p className="price-note">
+                Final price is confirmed by your regional sales representative.
+              </p>
+
+              <div style={{ marginTop: "20px", display: "grid", gap: "10px" }}>
+                <Link
+                  className="button button-lime"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "100%",
+                  }}
+                  to={`/enquiry?machine=${encodeURIComponent(
+                    machineName
+                  )}&price=${totalPrice}&sku=${encodeURIComponent(
+                    machineSku
+                  )}&configured=true`}
+                >
+                  <i className="bi bi-chat-dots"></i> Request Quote for this
+                  Build
+                </Link>
+                <Link
+                  className="button button-dark"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "100%",
+                  }}
+                  to={`/machine-details?id=${machine?.slug || machineParam}`}
+                >
+                  <i className="bi bi-arrow-left"></i> Back to Machine Details
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="home-contact" id="contact">
+          <div className="contact-mark">
+            <i className="bi bi-chat-square-text"></i>
+          </div>
+          <div>
+            <span className="eyebrow eyebrow-light">
+              Ready to discuss your build?
+            </span>
+            <h2>Take your specification further.</h2>
+          </div>
+          <p>
+            Our team can confirm compatible options and prepare your final quote.
+          </p>
+          <Link
+            className="contact-action"
+            to={`/enquiry?machine=${encodeURIComponent(
+              machineName
+            )}&price=${totalPrice}&sku=${encodeURIComponent(machineSku)}`}
+          >
+            Continue to enquiry <i className="bi bi-arrow-up-right"></i>
+          </Link>
+        </section>
+      </main>
     </div>
-  )
-}
+  );
+};
 
-export default Configure
+export default Configure;

@@ -1,7 +1,164 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { machinesApi } from "../api/machinesApi";
+import { reviewsApi } from "../api/reviewsApi";
+import { faqsApi } from "../api/faqsApi";
+import { BASE_URL } from "../api/axiosInstance";
+import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 
+const DUMMY_REVIEW_AVATARS = [
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80",
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80",
+  "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=80",
+];
+
+const resolveImageUrl = (img) => {
+  if (!img || img === "string") {
+    return "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80";
+  }
+  if (img.startsWith("http://") || img.startsWith("https://")) {
+    return img;
+  }
+  const cleanBase = (BASE_URL || "https://node.aitechnotech.in/machine").replace(/\/+$/, "");
+  const cleanPath = img.startsWith("/") ? img : `/${img}`;
+  return `${cleanBase}${cleanPath}`;
+};
 
 const Home = () => {
+  const [machines, setMachines] = useState([]);
+  const [loadingMachines, setLoadingMachines] = useState(true);
+
+  // Reviews state (GET /api/v1/reviews & POST /api/v1/reviews)
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    authorName: "",
+    authorTitle: "",
+    company: "",
+    country: "United States",
+    rating: 5,
+    headline: "",
+    comment: "",
+    machinePurchased: "",
+  });
+
+  // FAQs state (GET /api/v1/faqs)
+  const [faqs, setFaqs] = useState([]);
+  const [loadingFaqs, setLoadingFaqs] = useState(true);
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+
+  const fetchReviews = () => {
+    setLoadingReviews(true);
+    reviewsApi
+      .getReviews()
+      .then((res) => {
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        setReviews(list);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("refresh-carousels"));
+        }, 100);
+      })
+      .catch((err) => {
+        console.warn("Could not load reviews:", err.message);
+      })
+      .finally(() => {
+        setLoadingReviews(false);
+      });
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    machinesApi
+      .getMachines({ limit: 6 })
+      .then((res) => {
+        if (!mounted) return;
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        setMachines(list);
+      })
+      .catch((err) => {
+        console.warn("Could not load machines for homepage:", err.message);
+      })
+      .finally(() => {
+        if (mounted) setLoadingMachines(false);
+      });
+
+    fetchReviews();
+
+    faqsApi
+      .getFaqs()
+      .then((res) => {
+        if (!mounted) return;
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const sorted = list
+          .filter((f) => f.isActive !== false)
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
+        setFaqs(sorted);
+      })
+      .catch((err) => {
+        console.warn("Could not load FAQs for homepage:", err.message);
+      })
+      .finally(() => {
+        if (mounted) setLoadingFaqs(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.authorName.trim() || !reviewForm.comment.trim()) {
+      showErrorAlert("Validation Error", "Please provide your name and review comment.");
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const payload = {
+        authorName: reviewForm.authorName.trim(),
+        authorTitle: reviewForm.authorTitle.trim() || "Operations Lead",
+        company: reviewForm.company.trim() || "Manufacturing Works",
+        country: reviewForm.country.trim() || "United States",
+        rating: Number(reviewForm.rating) || 5,
+        headline: reviewForm.headline.trim() || "High precision and dependable machinery",
+        comment: reviewForm.comment.trim(),
+        machinePurchased: reviewForm.machinePurchased.trim() || "MS Platform",
+      };
+
+      await reviewsApi.createReview(payload);
+      showSuccessAlert(
+        "Review Submitted",
+        "Thank you! Your feedback has been successfully submitted."
+      );
+      setShowReviewModal(false);
+      setReviewForm({
+        authorName: "",
+        authorTitle: "",
+        company: "",
+        country: "United States",
+        rating: 5,
+        headline: "",
+        comment: "",
+        machinePurchased: "",
+      });
+      fetchReviews();
+    } catch (err) {
+      showErrorAlert("Submission Failed", err.message || "Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Group reviews into pages of up to 3 cards
+  const reviewPages = [];
+  for (let i = 0; i < reviews.length; i += 3) {
+    reviewPages.push(reviews.slice(i, i + 3));
+  }
   return (
     <div>
         <main>
@@ -172,185 +329,89 @@ const Home = () => {
 <i className="bi bi-arrow-up-right"></i>
           </Link>
         </div>
-        <div className="machine-carousel" data-carousel data-carousel-interval="7000" aria-label="Featured machines">
-          <div className="machine-carousel-track" data-carousel-track>
-            <div className="machine-carousel-page" data-carousel-slide>
-              <div className="machine-grid">
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machine-details#axis-400">
-                    <img src="https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1200&amp;fmt=webp" alt="Precision machining equipment on a production floor" loading="lazy"/>
-                    <span className="machine-category">CNC · TURNING</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>AX-400</span>
-                      <span>PRECISION CNC LATHE</span>
-                    </div>
-                    <h3>Axis 400</h3>
-                    <p>Compact, accurate turning for flexible production.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$48,500</strong>
-                      </span>
-                      <Link to="/machine-details#axis-400" aria-label="View Axis 400">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machine-details#arc-700">
-                    <img src="https://assets.haascnc.com/is/image/haascnc/VF-2SS?wid=1200&amp;fmt=webp" alt="Industrial vertical machining centre" loading="lazy"/>
-                    <span className="machine-category">CNC · MILLING</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>AR-700</span>
-                      <span>VERTICAL MACHINING CENTRE</span>
-                    </div>
-                    <h3>Arc 700</h3>
-                    <p>Rigid, versatile machining for demanding parts.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$72,400</strong>
-                      </span>
-                      <Link to="/machine-details#arc-700" aria-label="View Arc 700">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machine-details#flare-6">
-                    <img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=1000&q=85" alt="Industrial laser cutting machinery" loading="lazy"/>
-                    <span className="machine-category">LASER · CUTTING</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>FL-6000</span>
-                      <span>FIBER LASER SYSTEM</span>
-                    </div>
-                    <h3>Flare 6</h3>
-                    <p>Clean, fast sheet cutting in a production-ready cell.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$96,300</strong>
-                      </span>
-                      <Link to="/machine-details#flare-6" aria-label="View Flare 6">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              </div>
+        <div className="machine-carousel" aria-label="Featured machines">
+          {loadingMachines ? (
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#6b7c72" }}>
+              <div
+                className="spinner-border text-secondary mb-3"
+                role="status"
+                style={{ width: "2rem", height: "2rem" }}
+              ></div>
+              <div>Loading machines from catalogue...</div>
             </div>
-            <div className="machine-carousel-page" data-carousel-slide>
-              <div className="machine-grid">
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machines#contact">
-                    <img src="https://assets.haascnc.com/is/image/haascnc/ST-30?wid=1200&amp;fmt=webp" alt="Industrial turning equipment in a machine shop" loading="lazy"/>
-                    <span className="machine-category">CNC · HEAVY TURNING</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>AX-520</span>
-                      <span>HIGH-CAPACITY CNC LATHE</span>
-                    </div>
-                    <h3>Axis 520</h3>
-                    <p>Extra turning capacity for larger, demanding workpieces.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$61,200</strong>
-                      </span>
-                      <Link to="/machines#contact" aria-label="Ask about Axis 520">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machines#contact">
-                    <img src="https://assets.haascnc.com/is/image/haascnc/VF-2TR?wid=1200&amp;fmt=webp" alt="Advanced machining equipment on a factory floor" loading="lazy"/>
-                    <span className="machine-category">CNC · 5-AXIS MILLING</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>AR-900</span>
-                      <span>5-AXIS MACHINING CENTRE</span>
-                    </div>
-                    <h3>Arc 900</h3>
-                    <p>Five-axis flexibility for complex parts and fewer setups.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$118,900</strong>
-                      </span>
-                      <Link to="/machines#contact" aria-label="Ask about Arc 900">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-                <article className="machine-card">
-                  <Link className="machine-image" to="/machines#contact">
-                    <img src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1000&q=85" alt="High-power laser production machinery" loading="lazy"/>
-                    <span className="machine-category">LASER · HIGH POWER</span>
-                    <span className="image-arrow">
-                      <i className="bi bi-arrow-up-right"></i>
-                    </span>
-                  </Link>
-                  <div className="machine-card-body">
-                    <div className="machine-meta">
-                      <span>FL-12000</span>
-                      <span>12 KW FIBER LASER SYSTEM</span>
-                    </div>
-                    <h3>Flare 12</h3>
-                    <p>High-power sheet cutting for faster throughput at scale.</p>
-                    <div className="machine-card-bottom">
-                      <span>FROM 
-
-                        <strong>$149,800</strong>
-                      </span>
-                      <Link to="/machines#contact" aria-label="Ask about Flare 12">
-                        <i className="bi bi-arrow-right"></i>
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              </div>
+          ) : machines.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "#6b7c72",
+                background: "#fff",
+                borderRadius: "10px",
+                border: "1px solid #e1e6e0",
+                margin: "20px 0",
+              }}
+            >
+              <i className="bi bi-info-circle mb-2 d-block" style={{ fontSize: "1.8rem" }}></i>
+              <strong style={{ color: "#173f35" }}>No machines currently available.</strong>
+              <p className="mt-1 mb-0" style={{ fontSize: "14px" }}>
+                Check back soon as new machines are published to the catalogue.
+              </p>
             </div>
-          </div>
-          <div className="machine-carousel-controls">
-            <button type="button" data-carousel-prev aria-label="Previous three machines">
-              <i className="bi bi-arrow-left"></i>
-            </button>
-            <div className="field-indicators" aria-label="Choose machine page">
-              <button className="active" type="button" data-carousel-to="0" aria-current="true" aria-label="Machines 1 to 3"></button>
-              <button type="button" data-carousel-to="1" aria-label="Machines 4 to 6"></button>
+          ) : (
+            <div className="machine-grid">
+              {machines.map((m) => {
+                const img = resolveImageUrl(m.images?.[0]);
+                const sku = m.sku || m.slug?.toUpperCase() || "MACH";
+                const cat = (m.category || "CNC").toUpperCase();
+                const price =
+                  m.basePrice != null
+                    ? `$${Number(m.basePrice).toLocaleString()}`
+                    : "Contact";
+                const detailUrl = `/machine-details?id=${m.slug || m._id}`;
+
+                return (
+                  <article className="machine-card" key={m._id || m.slug}>
+                    <Link className="machine-image" to={detailUrl}>
+                      <img
+                        src={img}
+                        alt={m.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80";
+                        }}
+                      />
+                      <span className="machine-category">{cat}</span>
+                      <span className="image-arrow">
+                        <i className="bi bi-arrow-up-right"></i>
+                      </span>
+                    </Link>
+                    <div className="machine-card-body">
+                      <div className="machine-meta">
+                        <span>{sku}</span>
+                        <span>{cat}</span>
+                      </div>
+                      <h3>{m.name}</h3>
+                      <p>
+                        {m.summary ||
+                          m.description?.slice(0, 80) ||
+                          "Production machinery platform."}
+                      </p>
+                      <div className="machine-card-bottom">
+                        <span>
+                          FROM <strong>{price}</strong>
+                        </span>
+                        <Link to={detailUrl} aria-label={`View ${m.name}`}>
+                          <i className="bi bi-arrow-right"></i>
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
-            <button type="button" data-carousel-next aria-label="Next three machines">
-              <i className="bi bi-arrow-right"></i>
-            </button>
-          </div>
+          )}
         </div>
       </section>
       <section className="how-section" id="how-it-works">
@@ -456,103 +517,298 @@ const Home = () => {
             <i className="bi bi-arrow-up-right"></i>
           </Link>
         </div>
-      </section>
-      <section className="testimonial-section" id="testimonial">
+      </section>      <section className="testimonial-section" id="testimonial">
         <div className="testimonial-intro">
           <div>
             <div className="eyebrow">
-              <span></span> Customer stories · Sample
-
+              <span></span> Customer stories
             </div>
             <h2>Good work travels.<br/>
               <em> Good partners stay.</em>
             </h2>
           </div>
-          <p>Example customer feedback for this design preview.</p>
+          <p>Verified field feedback from machine operators and engineering leads.</p>
+          <button
+            type="button"
+            className="button button-dark"
+            style={{ marginTop: "14px", fontSize: "11px", padding: "7px 14px", width: "fit-content", cursor: "pointer" }}
+            onClick={() => setShowReviewModal(true)}
+          >
+            <i className="bi bi-pencil-square"></i> Share your review
+          </button>
         </div>
         <div className="carousel slide testimonial-carousel" id="customerStories" data-carousel data-carousel-interval="7000">
           <div className="carousel-inner testimonial-pages" data-carousel-track>
-            <div className="carousel-item active testimonial-page" id="customer-story-page-1" data-carousel-slide>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80" alt="Portrait of Daniel Torres" loading="lazy"/><blockquote>â€œWe arrived with a part, a deadline, and a lot of questions. The team helped us get clear on the right setup before we made a decision.â€</blockquote>
-                <figcaption>
-                  <strong>Daniel Torres</strong>
-                  <span>Operations Director</span>
-                  <small>Meridian Precision Works · Ohio, USA</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80" alt="Portrait of Lauren Chen" loading="lazy"/><blockquote>â€œThe options made our first conversation more useful. We could focus on throughput, tooling, and floor space straight away.â€</blockquote>
-                <figcaption>
-                  <strong>Lauren Chen</strong>
-                  <span>Manufacturing Lead</span>
-                  <small>Summit Components · Ontario, Canada</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80" alt="Portrait of Marco Silva" loading="lazy"/><blockquote>â€œWe needed a flexible platform, not a one-size-fits-all quote. The regional team helped us work through the trade-offs.â€</blockquote>
-                <figcaption>
-                  <strong>Marco Silva</strong>
-                  <span>Owner</span>
-                  <small>Formline Fabrication · Lisbon, Portugal</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-            </div>
-            <div className="carousel-item testimonial-page" id="customer-story-page-2" data-carousel-slide>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80" alt="Portrait of Amelia Brooks" loading="lazy"/><blockquote>We could see the available options and likely investment before bringing our whole production team into the discussion.</blockquote>
-                <figcaption>
-                  <strong>Amelia Brooks</strong>
-                  <span>Plant Manager</span>
-                  <small>North Ridge Tooling · Michigan, USA</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80" alt="Portrait of Ethan Miller" loading="lazy"/><blockquote>Our local representative understood the material and the tolerances. The conversation felt grounded in our real work.</blockquote>
-                <figcaption>
-                  <strong>Ethan Miller</strong>
-                  <span>Production Engineer</span>
-                  <small>Fieldstone Manufacturing · Alberta, Canada</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-              <figure className="testimonial-card">
-                <img className="testimonial-photo" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=80" alt="Portrait of Sofia Martin" loading="lazy"/><blockquote>Having a clear starting specification made it much easier to discuss the custom details that matter to our shop.</blockquote>
-                <figcaption>
-                  <strong>Sofia Martin</strong>
-                  <span>Managing Director</span>
-                  <small>Atelier Motion · Lyon, France</small>
-                </figcaption>
-                <span className="testimonial-mark">
-                  <i className="bi bi-quote"></i>
-                </span>
-              </figure>
-            </div>
+            {loadingReviews ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "#6b7c72" }}>
+                Loading customer stories from live database...
+              </div>
+            ) : reviewPages.length === 0 ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "#6b7c72" }}>
+                No customer reviews recorded yet. Be the first to share your experience.
+              </div>
+            ) : (
+              reviewPages.map((page, pageIdx) => (
+                <div
+                  className={`carousel-item ${pageIdx === 0 ? "active" : ""} testimonial-page`}
+                  id={`customer-story-page-${pageIdx + 1}`}
+                  data-carousel-slide
+                  key={pageIdx}
+                >
+                  {page.map((rev, cardIdx) => {
+                    const globalIdx = pageIdx * 3 + cardIdx;
+                    const photoUrl =
+                      rev.imageUrl ||
+                      rev.image ||
+                      rev.avatar ||
+                      DUMMY_REVIEW_AVATARS[globalIdx % DUMMY_REVIEW_AVATARS.length];
+
+                    return (
+                      <figure className="testimonial-card" key={rev._id || globalIdx}>
+                        <img
+                          className="testimonial-photo"
+                          src={photoUrl}
+                          alt={`Portrait of ${rev.authorName}`}
+                          loading="lazy"
+                        />
+                        <blockquote>“{rev.comment || rev.headline}”</blockquote>
+                        <figcaption>
+                          <strong>{rev.authorName}</strong>
+                          <span>{rev.authorTitle || "Verified Customer"}</span>
+                          <small>
+                            {rev.company}
+                            {rev.country ? ` · ${rev.country}` : ""}
+                            {rev.machinePurchased ? ` · ${rev.machinePurchased}` : ""}
+                          </small>
+                        </figcaption>
+                        <span className="testimonial-mark">
+                          <i className="bi bi-quote"></i>
+                        </span>
+                      </figure>
+                    );
+                  })}
+                </div>
+              ))
+            )}
           </div>
-          <div className="testimonial-controls">
-            <button className="carousel-control-prev story-control" type="button" data-carousel-prev aria-label="Previous customer stories">
-              <i className="bi bi-arrow-left"></i>
-            </button>
-            <button className="carousel-control-next story-control" type="button" data-carousel-next aria-label="Next customer stories">
-              <i className="bi bi-arrow-right"></i>
-            </button>
-          </div>
+          {reviewPages.length > 1 && (
+            <div className="testimonial-controls">
+              <button
+                className="carousel-control-prev story-control"
+                type="button"
+                data-carousel-prev
+                aria-label="Previous customer stories"
+              >
+                <i className="bi bi-arrow-left"></i>
+              </button>
+              <button
+                className="carousel-control-next story-control"
+                type="button"
+                data-carousel-next
+                aria-label="Next customer stories"
+              >
+                <i className="bi bi-arrow-right"></i>
+              </button>
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Review Submission Modal (POST /api/v1/reviews) */}
+      {showReviewModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(18, 30, 24, 0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+          }}
+          onClick={() => setShowReviewModal(false)}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              maxWidth: "540px",
+              width: "100%",
+              borderRadius: "8px",
+              padding: "28px",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.25)",
+              border: "1px solid #d4ddd7",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+              <div>
+                <div className="eyebrow" style={{ marginBottom: "6px" }}>
+                  <span></span> VERIFIED REVIEW
+                </div>
+                <h3 style={{ margin: 0, fontSize: "20px", color: "#16281e" }}>
+                  Share your experience
+                </h3>
+                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#6b7c72" }}>
+                  Your feedback helps other machine operators and engineering leads.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  color: "#6b7c72",
+                  padding: "4px",
+                }}
+                aria-label="Close modal"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} style={{ display: "grid", gap: "14px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Your Name *
+                  </span>
+                  <input
+                    required
+                    className="rep-input"
+                    placeholder="e.g. Daniel Torres"
+                    value={reviewForm.authorName}
+                    onChange={(e) => setReviewForm({ ...reviewForm, authorName: e.target.value })}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Job Title *
+                  </span>
+                  <input
+                    required
+                    className="rep-input"
+                    placeholder="e.g. Head of Tooling Operations"
+                    value={reviewForm.authorTitle}
+                    onChange={(e) => setReviewForm({ ...reviewForm, authorTitle: e.target.value })}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Company *
+                  </span>
+                  <input
+                    required
+                    className="rep-input"
+                    placeholder="e.g. Meridian Precision Works"
+                    value={reviewForm.company}
+                    onChange={(e) => setReviewForm({ ...reviewForm, company: e.target.value })}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Country *
+                  </span>
+                  <input
+                    required
+                    className="rep-input"
+                    placeholder="e.g. United States"
+                    value={reviewForm.country}
+                    onChange={(e) => setReviewForm({ ...reviewForm, country: e.target.value })}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.6fr", gap: "12px" }}>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Machine Purchased *
+                  </span>
+                  <input
+                    required
+                    className="rep-input"
+                    placeholder="e.g. MS-T1000 CNC Turning Center"
+                    value={reviewForm.machinePurchased}
+                    onChange={(e) => setReviewForm({ ...reviewForm, machinePurchased: e.target.value })}
+                  />
+                </label>
+                <label style={{ display: "grid", gap: "5px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                    Rating
+                  </span>
+                  <select
+                    className="rep-input"
+                    value={reviewForm.rating}
+                    onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
+                  >
+                    <option value={5}>5 Stars ★★★★★</option>
+                    <option value={4}>4 Stars ★★★★☆</option>
+                    <option value={3}>3 Stars ★★★☆☆</option>
+                    <option value={2}>2 Stars ★★☆☆☆</option>
+                    <option value={1}>1 Star ★☆☆☆☆</option>
+                  </select>
+                </label>
+              </div>
+
+              <label style={{ display: "grid", gap: "5px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                  Review Headline *
+                </span>
+                <input
+                  required
+                  className="rep-input"
+                  placeholder="e.g. Unmatched rigidity on titanium batches"
+                  value={reviewForm.headline}
+                  onChange={(e) => setReviewForm({ ...reviewForm, headline: e.target.value })}
+                />
+              </label>
+
+              <label style={{ display: "grid", gap: "5px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", color: "#546559" }}>
+                  Your Comments &amp; Results *
+                </span>
+                <textarea
+                  required
+                  rows={4}
+                  className="rep-textarea"
+                  placeholder="Describe your production results, tooling life, tolerances, or commissioning experience..."
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                />
+              </label>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  className="button button-outline"
+                  onClick={() => setShowReviewModal(false)}
+                  disabled={submittingReview}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="button button-lime"
+                  disabled={submittingReview}
+                >
+                  <i className="bi bi-send"></i> {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <section className="faq-section section-space" id="faq" aria-label="Frequently asked questions">
         <div className="faq-intro">
           <div className="eyebrow eyebrow-light">
@@ -576,38 +832,43 @@ const Home = () => {
           </Link>
         </div>
         <div className="faq-list">
-          <details open>
-            <summary>
-              <span className="faq-number">01</span>
-              <span className="faq-question">Are the prices shown final?</span>
-              <i className="bi bi-plus"></i>
-            </summary>
-            <p>Catalogue and configuration prices are indicative starting points. Your representative prepares a final quotation after reviewing the application, selected options, delivery, and installation requirements.</p>
-          </details>
-          <details>
-            <summary>
-              <span className="faq-number">02</span>
-              <span className="faq-question">Can I review options with a specialist?</span>
-              <i className="bi bi-plus"></i>
-            </summary>
-            <p>Yes. Send your configuration as an enquiry and a local representative can confirm compatibility, discuss custom requirements, and help refine the specification.</p>
-          </details>
-          <details>
-            <summary>
-              <span className="faq-number">03</span>
-              <span className="faq-question">What happens after I send an enquiry?</span>
-              <i className="bi bi-plus"></i>
-            </summary>
-            <p>Your regional sales representative reviews the configuration, contacts you to discuss the project, and prepares a tailored quotation based on that conversation.</p>
-          </details>
-          <details>
-            <summary>
-              <span className="faq-number">04</span>
-              <span className="faq-question">Can delivery, installation, and training be included?</span>
-              <i className="bi bi-plus"></i>
-            </summary>
-            <p>Yes. Your representative can review delivery, installation, commissioning, and operator training with you and include the agreed scope in the final quote.</p>
-          </details>
+          {loadingFaqs ? (
+            <div style={{ padding: "30px 20px", color: "#6b7c72" }}>
+              Loading frequently asked questions...
+            </div>
+          ) : faqs.length === 0 ? (
+            <div style={{ padding: "30px 20px", color: "#6b7c72" }}>
+              No frequently asked questions available at this time.
+            </div>
+          ) : (
+            faqs.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <details
+                  key={faq._id || index}
+                  open
+                  className={isOpen ? "is-open" : ""}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenFaqIndex((prev) => (prev === index ? -1 : index));
+                  }}
+                >
+                  <summary>
+                    <span className="faq-number">
+                      {faq.questionNumber || String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="faq-question">{faq.question}</span>
+                    <i className="bi bi-plus"></i>
+                  </summary>
+                  <div className="faq-collapse">
+                    <div className="faq-collapse-inner">
+                      <p>{faq.answer}</p>
+                    </div>
+                  </div>
+                </details>
+              );
+            })
+          )}
         </div>
       </section>
       <section className="field-stories" id="field-stories" aria-label="MACHINE field stories">
@@ -649,10 +910,10 @@ const Home = () => {
                   <span>02 / CNC TURNING</span>
                 </div>
                 <div className="field-slide-copy">
-                  <span className="field-slide-kicker">AXIS 400 · AX-400</span>
+                  <span className="field-slide-kicker">PRECISION CNC TURNING</span>
                   <h3>Precision turning, built for flexibility.</h3>
-                  <p>Explore the Axis 400 platform and compare a starting specification for short or long production runs.</p>
-                  <Link className="field-slide-link" to="/machine-details#axis-400">View Axis 400 
+                  <p>Explore precision turning platforms and compare starting specifications for short or long production runs.</p>
+                  <Link className="field-slide-link" to="/machines?category=Turning">View Turning Machines 
 
                     <i className="bi bi-arrow-up-right"></i>
                   </Link>
@@ -666,10 +927,10 @@ const Home = () => {
                   <span>03 / CNC MILLING</span>
                 </div>
                 <div className="field-slide-copy">
-                  <span className="field-slide-kicker">ARC 700 · AR-700</span>
+                  <span className="field-slide-kicker">HIGH-RIGIDITY MACHINING</span>
                   <h3>Make room for demanding parts.</h3>
-                  <p>Review the Arc 700 vertical machining platform, then discuss tooling, spindle, and coolant requirements.</p>
-                  <Link className="field-slide-link" to="/machine-details#arc-700">View Arc 700 
+                  <p>Review vertical and 5-axis machining platforms, then discuss tooling, spindle, and coolant requirements.</p>
+                  <Link className="field-slide-link" to="/machines?category=Milling">View Milling Machines 
 
                     <i className="bi bi-arrow-up-right"></i>
                   </Link>
@@ -683,10 +944,10 @@ const Home = () => {
                   <span>04 / LASER CUTTING</span>
                 </div>
                 <div className="field-slide-copy">
-                  <span className="field-slide-kicker">FLARE 6 · FL-6000</span>
+                  <span className="field-slide-kicker">HIGH-POWER FIBER LASER</span>
                   <h3>Bring sheet cutting into focus.</h3>
-                  <p>Compare the Flare 6 starting platform and consider power, handling, extraction, and cutting area.</p>
-                  <Link className="field-slide-link" to="/machine-details#flare-6">View Flare 6 
+                  <p>Compare fiber laser platforms and consider power, handling, extraction, and cutting area.</p>
+                  <Link className="field-slide-link" to="/machines?category=Laser">View Laser Machines 
 
                     <i className="bi bi-arrow-up-right"></i>
                   </Link>
@@ -703,7 +964,7 @@ const Home = () => {
                   <span className="field-slide-kicker">YOUR BUILD · YOUR PROCESS</span>
                   <h3>Shape a specification around your workflow.</h3>
                   <p>Use the configuration preview to compare options, then bring the details to your local representative.</p>
-                  <Link className="field-slide-link" to="/configure#axis-config">Configure a machine 
+                  <Link className="field-slide-link" to="/configure">Configure a machine 
 
                     <i className="bi bi-arrow-up-right"></i>
                   </Link>

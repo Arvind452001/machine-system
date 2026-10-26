@@ -1,9 +1,21 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { showErrorAlert, showSuccessAlert } from "../utils/alert";
 
 const SignUp = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, register } = useAuth();
+  const navigate = useNavigate();
+
+  const [role, setRole] = useState("customer");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [company, setCompany] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // If already logged in, do not show signup page - redirect straight to dashboard
   if (isAuthenticated) {
@@ -14,9 +26,53 @@ const SignUp = () => {
     return <Navigate to={targetDashboard} replace />;
   }
 
-  const [role, setRole] = useState("customer");
-
   const isCustomer = role === "customer";
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (!email.trim() || !password.trim()) {
+      const msg = "Please provide a work email and password.";
+      setErrorMessage(msg);
+      showErrorAlert("Validation Error", msg);
+      return;
+    }
+
+    if (password.length < 8) {
+      const msg = "Password must be at least 8 characters long.";
+      setErrorMessage(msg);
+      showErrorAlert("Password Too Short", msg);
+      return;
+    }
+
+    setLoading(true);
+    const result = await register({
+      firstName,
+      lastName,
+      name: [firstName, lastName].filter(Boolean).join(" ").trim() || email.split("@")[0],
+      company,
+      email: email.trim(),
+      password,
+      role,
+    });
+    setLoading(false);
+
+    if (result.success) {
+      await showSuccessAlert(
+        "Account Created",
+        "Your account has been registered successfully."
+      );
+      navigate(
+        isCustomer ? "/customer/dashboard" : "/representative/dashboard",
+        { replace: true }
+      );
+    } else {
+      const failMsg = result.message || "Failed to create account.";
+      setErrorMessage(failMsg);
+      showErrorAlert("Registration Failed", failMsg);
+    }
+  };
 
   return (
     <div>
@@ -61,7 +117,10 @@ const SignUp = () => {
           >
             <button
               type="button"
-              onClick={() => setRole("customer")}
+              onClick={() => {
+                setRole("customer");
+                setErrorMessage("");
+              }}
               className={isCustomer ? "button button-lime" : "button"}
               style={{ flex: 1, cursor: "pointer" }}
               aria-pressed={isCustomer}
@@ -71,7 +130,10 @@ const SignUp = () => {
 
             <button
               type="button"
-              onClick={() => setRole("representative")}
+              onClick={() => {
+                setRole("representative");
+                setErrorMessage("");
+              }}
               className={!isCustomer ? "button button-lime" : "button"}
               style={{ flex: 1, cursor: "pointer" }}
               aria-pressed={!isCustomer}
@@ -93,7 +155,28 @@ const SignUp = () => {
               : "Create your representative account to manage customer enquiries and quotation conversations."}
           </p>
 
-          <div className="auth-form">
+          {errorMessage && (
+            <div
+              role="alert"
+              style={{
+                margin: "16px 0",
+                padding: "12px 16px",
+                background: "#fde8e4",
+                border: "1px solid #e87a5d",
+                color: "#9e2c14",
+                borderRadius: "6px",
+                fontSize: "0.9rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: "1.1rem" }}></i>
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-sm-6 form-group">
                 <label
@@ -107,6 +190,8 @@ const SignUp = () => {
                   id="signup-first-name"
                   autoComplete="given-name"
                   placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
 
@@ -122,6 +207,8 @@ const SignUp = () => {
                   id="signup-last-name"
                   autoComplete="family-name"
                   placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
 
@@ -137,6 +224,8 @@ const SignUp = () => {
                   id="signup-company"
                   autoComplete="organization"
                   placeholder="Company name"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
                 />
               </div>
 
@@ -145,14 +234,17 @@ const SignUp = () => {
                   className="form-label"
                   htmlFor="signup-email"
                 >
-                  Work email
+                  Work email *
                 </label>
                 <input
                   className="form-control"
                   id="signup-email"
                   type="email"
+                  required
                   autoComplete="email"
                   placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
@@ -161,49 +253,52 @@ const SignUp = () => {
                   className="form-label"
                   htmlFor="signup-password"
                 >
-                  Create password
+                  Create password *
                 </label>
                 <input
                   className="form-control"
                   id="signup-password"
                   type="password"
+                  required
                   autoComplete="new-password"
-                  placeholder="Create a password"
+                  placeholder="At least 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
 
             <label className="consent-row">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+              />
               <span>
                 I agree to the <Link to="/terms">terms</Link> and have read
                 the <Link to="/privacy">privacy notice</Link>.
               </span>
             </label>
 
-            <Link
+            <button
               className="button button-lime mt-3"
-              to={
-                isCustomer
-                  ? "/customer/dashboard"
-                  : "/representative/dashboard"
-              }
+              type="submit"
+              disabled={loading}
+              style={{ width: "100%", justifyContent: "center", cursor: "pointer" }}
             >
-              {isCustomer
+              {loading
+                ? "Creating account..."
+                : isCustomer
                 ? "Continue to customer dashboard"
                 : "Continue to representative dashboard"}
 
               <i className="bi bi-arrow-right"></i>
-            </Link>
+            </button>
 
             <p className="auth-switch">
               Already have an account? <Link to="/login">Log in</Link>
             </p>
-
-            <p className="summary-note">
-              Static preview only: account details are not saved or verified.
-            </p>
-          </div>
+          </form>
         </section>
       </main>
     </div>

@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const RoleBanner = ({ role }) => {
+  const { user } = useAuth();
   const isRep = role === "representative";
+  const displayName = user?.name || (isRep ? "Representative Account" : "Customer Account");
+  const displaySubtitle =
+    user?.jobRole && user?.company
+      ? `${user.jobRole} · ${user.company}`
+      : user?.company || user?.jobRole || (isRep ? "Commercial Representative" : "Customer Workspace");
 
   return (
     <div
@@ -21,12 +28,8 @@ const RoleBanner = ({ role }) => {
           </span>
           <div className="role-user-info">
             <span className="role-user-name">
-              <strong>{isRep ? "Alex Morgan" : "Morgan Chen"}</strong>
-              <small>
-                {isRep
-                  ? "Country Representative · Central Territory"
-                  : "Operations Director · Northline Precision"}
-              </small>
+              <strong>{displayName}</strong>
+              <small>{displaySubtitle}</small>
             </span>
           </div>
         </div>
