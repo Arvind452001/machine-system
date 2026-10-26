@@ -17,6 +17,8 @@ import Contact from "./pages/Contact";
 import Enquiry from "./pages/Enquiry";
 import EnquiryDetails from "./pages/EnquiryDetails";
 import LogIn from "./pages/LogIn";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 
@@ -163,6 +165,22 @@ function App() {
             element={
               <GuestRoute>
                 <SignUp />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <GuestRoute>
+                <ForgotPassword />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/reset-password/:token"
+            element={
+              <GuestRoute>
+                <ResetPassword />
               </GuestRoute>
             }
           />

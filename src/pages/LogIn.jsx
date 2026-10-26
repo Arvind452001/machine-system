@@ -221,7 +221,7 @@ const LogIn = () => {
                 />{" "}
                 Keep me signed in
               </label>
-              <Link to="/contact">Forgot password?</Link>
+              <Link to="/forgot-password">Forgot password?</Link>
             </div>
 
             <button
