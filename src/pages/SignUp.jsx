@@ -17,7 +17,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(true);
 
   // OTP Fields
   const [otp, setOtp] = useState("");
@@ -403,17 +403,18 @@ const SignUp = () => {
                   </div>
                 </div>
 
-                <label className="consent-row">
+                <div className="consent-row" style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "16px" }}>
                   <input
+                    id="signup-terms"
                     type="checkbox"
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
+                    style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#27624c" }}
                   />
-                  <span>
-                    I agree to the <Link to="/terms">terms</Link> and have read
-                    the <Link to="/privacy">privacy notice</Link>.
-                  </span>
-                </label>
+                  <label htmlFor="signup-terms" style={{ cursor: "pointer", fontSize: "14px", color: "#475569", margin: 0 }}>
+                    I agree to the <Link to="/terms" onClick={(e) => e.stopPropagation()}>terms</Link> and have read the <Link to="/privacy" onClick={(e) => e.stopPropagation()}>privacy notice</Link>.
+                  </label>
+                </div>
 
                 <button
                   className="button button-lime mt-3"
