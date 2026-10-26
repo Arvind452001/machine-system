@@ -89,7 +89,7 @@ const MyQuotations = () => {
         <i className="bi bi-info-circle"></i>
         <span>
           {loading
-            ? "Loading quotations from backend (GET /api/v1/quotes/my)..."
+            ? "Loading quotations..."
             : "Live quotation proposals from your assigned representative. PDF streaming and status updates enabled."}
         </span>
       </div>

@@ -104,7 +104,7 @@ const RepresentativeDashboard = () => {
           </div>
           <h1>Good day, {repName}.</h1>
           <p>
-            Your assigned enquiries, customer conversations, and quotes in progress (GET /api/v1/stats/representative).
+            Your assigned enquiries, customer conversations, and quotes in progress.
           </p>
         </div>
         <div className="d-flex gap-2">

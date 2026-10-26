@@ -404,10 +404,7 @@ const Configure = () => {
                 </div>
               )}
 
-              <div className="compatibility-note">
-                <i className="bi bi-info-circle"></i>Final option compatibility
-                is validated by the rule engine (POST /api/v1/options/validate).
-              </div>
+              
             </div>
 
             <div className="preview-column">
