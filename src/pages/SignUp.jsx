@@ -16,6 +16,7 @@ const SignUp = () => {
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
 
   // OTP Fields
@@ -176,6 +177,19 @@ const SignUp = () => {
       setErrorMessage(failMsg);
       showErrorAlert("Resend Failed", failMsg);
     }
+  };
+
+  const handleResetToSignUp = () => {
+    setStep("form");
+    setOtp("");
+    setEmail("");
+    setPassword("");
+    setFirstName("");
+    setLastName("");
+    setCompany("");
+    setTermsAgreed(false);
+    setErrorMessage("");
+    setInfoMessage("");
   };
 
   return (
@@ -350,16 +364,42 @@ const SignUp = () => {
                     <label className="form-label" htmlFor="signup-password">
                       Create password *
                     </label>
-                    <input
-                      className="form-control"
-                      id="signup-password"
-                      type="password"
-                      required
-                      autoComplete="new-password"
-                      placeholder="At least 8 characters"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div style={{ position: "relative" }}>
+                      <input
+                        className="form-control"
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        autoComplete="new-password"
+                        placeholder="At least 8 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        style={{ paddingRight: "44px" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: "absolute",
+                          right: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          color: "#6b7c72",
+                          cursor: "pointer",
+                          fontSize: "1.15rem",
+                          padding: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        title={showPassword ? "Hide password" : "Show password"}
+                      >
+                        <i className={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -389,9 +429,7 @@ const SignUp = () => {
                     "Sending verification code..."
                   ) : (
                     <>
-                      {isCustomer
-                        ? "Continue to verification"
-                        : "Continue to verification"}
+                      Continue to verification
                       <i className="bi bi-arrow-right"></i>
                     </>
                   )}
@@ -667,17 +705,48 @@ const SignUp = () => {
                 </div>
               </div>
 
-              <Link
-                to="/login"
-                className="button button-lime"
-                style={{
-                  width: "100%",
-                  display: "inline-block",
-                  textAlign: "center",
-                }}
-              >
-                Return to Sign In
-              </Link>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <Link
+                  to="/login"
+                  className="button button-lime"
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    padding: "12px",
+                  }}
+                >
+                  Return to Sign In
+                  <i className="bi bi-box-arrow-in-right"></i>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleResetToSignUp}
+                  className="button"
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                    background: "transparent",
+                    border: "1px solid #d1d5db",
+                    color: "#374151",
+                    padding: "12px",
+                    fontWeight: 500,
+                    borderRadius: "4px",
+                  }}
+                >
+                  <i className="bi bi-arrow-left"></i>
+                  Return to Sign Up
+                </button>
+              </div>
             </div>
           )}
         </section>

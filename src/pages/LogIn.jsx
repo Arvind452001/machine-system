@@ -13,6 +13,7 @@ const LogIn = () => {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   // If already logged in, do not show login page - redirect straight to dashboard
   if (isAuthenticated) {
