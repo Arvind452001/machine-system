@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: authUser };
       }
     } catch (apiError) {
-      const errData = apiError.response?.data;
+      const errData = apiError.data || apiError.response?.data;
       if (errData?.code === "EMAIL_NOT_VERIFIED") {
         return {
           success: false,
