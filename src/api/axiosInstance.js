@@ -1,10 +1,16 @@
 import axios from "axios";
 
 // Default base URL fallback to live backend API
-const rawBaseUrl =
-  import.meta.env.VITE_API_BASE_URL || "https://node.aitechnotech.in/machine";
+const isLocalhost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
 
-  export const API_BASE_URL = "https://node.aitechnotech.in/machine";
+const rawBaseUrl = isLocalhost
+  ? "http://localhost:5000"
+  : import.meta.env.VITE_API_BASE_URL || "https://node.aitechnotech.in/machine";
+
+export const API_BASE_URL = rawBaseUrl;
   
 // Normalize baseURL so endpoints starting with /api/v1 do not get duplicated if base already has /api/v1
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");

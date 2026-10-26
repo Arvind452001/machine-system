@@ -248,7 +248,7 @@ const CustomerWorkspace = () => {
               </thead>
               <tbody>
                 {recentEnquiries.length > 0 ? (
-                  recentEnquiries.map((enq) => {
+                  recentEnquiries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((enq) => {
                     const refNum =
                       enq.referenceNumber ||
                       enq.enquiryNumber ||
@@ -313,6 +313,7 @@ const CustomerWorkspace = () => {
                 )}
               </tbody>
             </table>
+            <Pagination currentPage={currentPage} totalItems={recentEnquiries.length} pageSize={PAGE_SIZE} onPageChange={setCurrentPage} itemName="enquiries" />
           </div>
         </section>
 
