@@ -22,6 +22,9 @@ const ProfileSettings = () => {
   const [passwordMessage, setPasswordMessage] = useState({ text: "", type: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -259,44 +262,119 @@ const ProfileSettings = () => {
           <div className="profile-fields">
             <div className="profile-field">
               <label htmlFor="current-password">Current password</label>
-              <input
-                id="current-password"
-                name="currentPassword"
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="Enter current password"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  id="current-password"
+                  name="currentPassword"
+                  type={showCurrentPw ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  placeholder="Enter current password"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  style={{ paddingRight: "44px", width: "100%" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPw(!showCurrentPw)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7c72",
+                    cursor: "pointer",
+                    fontSize: "1.1rem",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label={showCurrentPw ? "Hide password" : "Show password"}
+                >
+                  <i className={showCurrentPw ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                </button>
+              </div>
             </div>
             <div className="profile-field">
               <label htmlFor="new-password">New password</label>
-              <input
-                id="new-password"
-                name="newPassword"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                required
-                placeholder="At least 8 characters"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  id="new-password"
+                  name="newPassword"
+                  type={showNewPw ? "text" : "password"}
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                  placeholder="At least 8 characters"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  style={{ paddingRight: "44px", width: "100%" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw(!showNewPw)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7c72",
+                    cursor: "pointer",
+                    fontSize: "1.1rem",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label={showNewPw ? "Hide password" : "Show password"}
+                >
+                  <i className={showNewPw ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                </button>
+              </div>
             </div>
             <div className="profile-field">
               <label htmlFor="confirm-password">Confirm new password</label>
-              <input
-                id="confirm-password"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                minLength={8}
-                required
-                placeholder="Re-enter new password"
-                value={passwordData.confirmPassword}
-                onChange={handlePasswordChange}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  id="confirm-password"
+                  name="confirmPassword"
+                  type={showConfirmPw ? "text" : "password"}
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                  placeholder="Re-enter new password"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  style={{ paddingRight: "44px", width: "100%" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw(!showConfirmPw)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7c72",
+                    cursor: "pointer",
+                    fontSize: "1.1rem",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                >
+                  <i className={showConfirmPw ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                </button>
+              </div>
             </div>
           </div>
 

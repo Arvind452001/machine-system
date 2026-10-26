@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { enquiriesApi } from "../api/enquiriesApi";
 import { useAuth } from "../context/AuthContext";
@@ -7,7 +7,7 @@ import { showErrorAlert, showSuccessAlert } from "../utils/alert";
 const Enquiry = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const queryMachineName =
     searchParams.get("machine") || "Industrial Machinery Platform";
@@ -28,6 +28,20 @@ const Enquiry = () => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || user.firstName || (user.name ? user.name.split(" ")[0] : ""),
+        lastName: prev.lastName || user.lastName || (user.name ? user.name.split(" ").slice(1).join(" ") : ""),
+        email: prev.email || user.email || "",
+        phone: prev.phone || user.phone || "",
+        company: prev.company || user.company || "",
+        country: prev.country || user.country || user.region || "United States",
+      }));
+    }
+  }, [user]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,6 +102,53 @@ const Enquiry = () => {
           <span>/</span>
           <span>Send enquiry</span>
         </div>
+
+        {!isAuthenticated && (
+          <div
+            style={{
+              maxWidth: "1140px",
+              margin: "0 auto 24px",
+              padding: "16px 20px",
+              background: "#fffbeb",
+              border: "1px solid #fde68a",
+              borderRadius: "8px",
+              color: "#92400e",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <i className="bi bi-shield-lock" style={{ fontSize: "20px", color: "#d97706" }}></i>
+              <div>
+                <strong>Customer Sign-In Required:</strong>
+                <div style={{ fontSize: "13px", marginTop: "2px" }}>
+                  You must be logged in to submit an enquiry so your regional representative can assign your project to your customer portal.
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <Link
+                to="/login"
+                state={{ from: `/enquiry${window.location.search}` }}
+                className="button button-dark"
+                style={{ padding: "8px 18px", fontSize: "12px", textDecoration: "none" }}
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="button button-outline"
+                style={{ padding: "8px 18px", fontSize: "12px", textDecoration: "none" }}
+              >
+                Register
+              </Link>
+            </div>
+          </div>
+        )}
+
         <section className="page-heading">
           <div>
             <div className="eyebrow">

@@ -174,16 +174,42 @@ const LogIn = () => {
               <label className="form-label" htmlFor="login-password">
                 Password
               </label>
-              <input
-                className="form-control"
-                id="login-password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="form-control"
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  style={{ paddingRight: "44px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "#6b7c72",
+                    cursor: "pointer",
+                    fontSize: "1.15rem",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  <i className={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                </button>
+              </div>
             </div>
 
             <div className="auth-form-meta">
