@@ -239,7 +239,30 @@ const Basket = () => {
                   basketItem.name
                 )}&price=${basketItem.price}&sku=${encodeURIComponent(
                   basketItem.sku
-                )}`}
+                )}&machineId=${encodeURIComponent(basketItem.machineId || basketItem._id || "")}`}
+                state={{
+                  machineId: basketItem.machineId || basketItem._id || "",
+                  machineName: basketItem.name,
+                  machineCode: basketItem.sku,
+                  calculatedTotal: basketItem.price,
+                  selectedOptions: basketItem.selectedOptions || [],
+                }}
+                onClick={() => {
+                  try {
+                    localStorage.setItem(
+                      "machine_configured_enquiry",
+                      JSON.stringify({
+                        machineId: basketItem.machineId || basketItem._id || "",
+                        machineName: basketItem.name,
+                        machineCode: basketItem.sku,
+                        calculatedTotal: basketItem.price,
+                        selectedOptions: basketItem.selectedOptions || [],
+                      })
+                    );
+                  } catch (e) {
+                    // ignore
+                  }
+                }}
               >
                 Continue to enquiry <i className="bi bi-arrow-right"></i>
               </Link>

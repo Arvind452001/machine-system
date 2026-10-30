@@ -48,13 +48,37 @@ const RepresentativeNewEnquiry = () => {
     setLoading(true);
     setErrorMsg("");
     try {
+      const selectedMachineObj = machinesList.find(
+        (m) =>
+          m._id === formData.machine ||
+          m.name === formData.machine ||
+          `${m.name || m.title || "Machine"} · ${m.category || "General"}` === formData.machine
+      );
+
+      const mName = selectedMachineObj?.name || formData.machine || "Machine Platform";
+      const mCode = selectedMachineObj?.sku || selectedMachineObj?.code || "MACH-01";
+      const mId = selectedMachineObj?._id || "6ad9fc28e39daefd54e568ff";
+      const mPrice = Number(selectedMachineObj?.basePrice || 0);
+
       await enquiriesApi.createEnquiry({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company.trim(),
+        country: formData.location || "United States",
+        whenToInstall: formData.timeline || "Within 1-3 months",
+        whatShouldWeKnow:
+          formData.notes || `Representative enquiry logged for ${formData.company}`,
+        machineCode: mCode,
+        machineName: mName,
+        machineId: mId,
+        calculatedTotal: mPrice,
+        selectedOptions: [],
+        contactConsent: true,
+
+        // Legacy / extra fields
         name: `${formData.firstName} ${formData.lastName}`.trim(),
-        email: formData.email,
-        phone: formData.phone,
-        company: formData.company,
         location: formData.location,
         machine: formData.machine,
         quantity: Number(formData.quantity) || 1,
@@ -63,6 +87,7 @@ const RepresentativeNewEnquiry = () => {
         notes: formData.notes,
         subject: `Territory Enquiry for ${formData.machine}`,
         message: formData.notes || `Representative enquiry logged for ${formData.company}`,
+        indicativePrice: mPrice,
       });
       setSubmitted(true);
       showSuccessAlert(
@@ -331,7 +356,16 @@ const RepresentativeNewEnquiry = () => {
             <i className="bi bi-x-lg"></i> Cancel
           </Link>
           <button className="button button-dark" type="submit" disabled={loading}>
-            <i className="bi bi-check2"></i> {loading ? "Creating enquiry..." : "Create enquiry"}
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Creating enquiry...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check2"></i> Create enquiry
+              </>
+            )}
           </button>
         </div>
       </form>

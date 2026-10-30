@@ -14,8 +14,17 @@ export const quotesApi = {
   },
 
   // GET /api/v1/quotes/representative (Representative get quotes assigned or prepared by them)
-  getRepresentativeQuotes: () => {
-    return axiosInstance.get("/api/v1/quotes/representative");
+  getRepresentativeQuotes: async () => {
+    try {
+      const res = await axiosInstance.get("/api/v1/quotes/representative");
+      if (res?.data && (Array.isArray(res.data) || Array.isArray(res.data?.data))) {
+        return res;
+      }
+      return res;
+    } catch {
+      // Fallback to /api/v1/quotes if /representative endpoint is not active
+      return axiosInstance.get("/api/v1/quotes");
+    }
   },
 
   // GET /api/v1/quotes/{id} (Get single quote details by ID or Quote Number)
@@ -31,6 +40,11 @@ export const quotesApi = {
   // PUT /api/v1/quotes/{id} (Update quote details, pricing, options, validity, or terms)
   updateQuote: (id, quoteData) => {
     return axiosInstance.put(`/api/v1/quotes/${id}`, quoteData);
+  },
+
+  // DELETE /api/v1/quotes/{id} (Delete quotation from database)
+  deleteQuote: (id) => {
+    return axiosInstance.delete(`/api/v1/quotes/${id}`);
   },
 
   // PATCH /api/v1/quotes/{id}/status (Customer accepts/declines, Admin & Rep change workflow state)

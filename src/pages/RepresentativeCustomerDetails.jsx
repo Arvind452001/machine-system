@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiClient } from "../api/client";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const RepresentativeCustomerDetails = () => {
   const [searchParams] = useSearchParams();
@@ -47,18 +48,31 @@ const RepresentativeCustomerDetails = () => {
             avatar: initials,
             email: cust.email || d.email || "—",
             phone: cust.phone || d.phone || "—",
-            machineCode: d.machineSummary?.sku || d.machineSummary?.code || "MACHINE",
-            machineTitle: d.machineSummary?.name || d.machineTitle || d.machine || "Configured Machine Platform",
+            machineCode: d.machineCode || d.machineSummary?.sku || d.machineSummary?.code || (typeof d.machine === "object" ? d.machine?.sku : "") || "MACHINE",
+            machineTitle:
+              d.machineName ||
+              d.machineSummary?.name ||
+              d.machineTitle ||
+              (typeof d.machine === "object" ? (d.machine?.name || d.machine?.title) : (typeof d.machine === "string" ? d.machine : "")) ||
+              "Configured Machine Platform",
+            selectedOptions: (Array.isArray(d.selectedOptions) ? d.selectedOptions : []).filter(Boolean).map((opt) => ({
+              name: typeof opt === "string" ? opt : (opt.name || opt.label || "Option"),
+              priceDelta: typeof opt === "object" ? Number(opt.priceDelta || 0) : 0,
+            })),
             spindle: d.machineSummary?.spindle || "Standard",
             tooling: d.machineSummary?.tooling || "Standard tooling",
             coolant: d.machineSummary?.coolant || "Standard coolant",
-            price: d.machineSummary?.indicativePrice
+            price: d.calculatedTotal
+              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(d.calculatedTotal)
+              : d.machineSummary?.indicativePrice
               ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(d.machineSummary.indicativePrice)
+              : (typeof d.machine === "object" && d.machine?.basePrice)
+              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(d.machine.basePrice)
               : d.price
               ? String(d.price)
               : "Price upon quotation",
-            enquiryId: d.enquiryNumber || d._id || customerKey,
-            note: d.projectDetails?.message || d.message || "Customer has not specified special delivery or tooling notes.",
+            enquiryId: d.referenceNumber || d.enquiryNumber || d._id || customerKey,
+            note: d.customerNotes || d.whatShouldWeKnow || d.projectDetails?.message || d.message || "Customer has not specified special delivery or tooling notes.",
           });
         } else {
           setCustomer(null);
@@ -92,9 +106,7 @@ const RepresentativeCustomerDetails = () => {
       </div>
 
       {loading ? (
-        <div style={{ padding: "64px 24px", textAlign: "center", color: "var(--muted, #666)" }}>
-          Loading customer record from live database...
-        </div>
+        <LoadingSpinner text="Loading customer record from live database..." minHeight="240px" />
       ) : !customer ? (
         <section
           style={{
@@ -206,34 +218,68 @@ const RepresentativeCustomerDetails = () => {
                   <span>Qty 1</span>
                 </div>
 
-                <dl>
-                  <dd>
-                    <div>
-                      <dl>
-                        <dt>Spindle</dt>
-                        <dd>{customer.spindle}</dd>
-                      </dl>
+                {customer.selectedOptions && customer.selectedOptions.length > 0 ? (
+                  <div style={{ margin: "10px 0" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#647168", textTransform: "uppercase", marginBottom: "8px" }}>
+                      Selected Options ({customer.selectedOptions.length})
                     </div>
-                    <div>
-                      <dl>
-                        <dt>Tooling</dt>
-                        <dd>{customer.tooling}</dd>
-                      </dl>
+                    <div style={{ display: "grid", gap: "5px" }}>
+                      {customer.selectedOptions.map((opt, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "6px 8px",
+                            background: idx % 2 === 0 ? "#f9faf8" : "#ffffff",
+                            border: "1px solid #edf1eb",
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                          }}
+                        >
+                          <span style={{ fontWeight: 500, color: "#2d3731" }}>{opt.name}</span>
+                          <span style={{ fontWeight: 600, color: opt.priceDelta > 0 ? "#1e6b45" : "#718096" }}>
+                            {opt.priceDelta > 0 ? `+$${opt.priceDelta.toLocaleString()}` : "Included"}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <dl>
-                        <dt>Coolant</dt>
-                        <dd>{customer.coolant}</dd>
-                      </dl>
+                    <div className="rep-price-total" style={{ marginTop: "12px", borderRadius: "4px" }}>
+                      <span>Calculated Total</span>
+                      <strong>{customer.price}</strong>
                     </div>
-                    <div>
-                      <dl>
-                        <dt>Indicative price</dt>
-                        <dd>{customer.price}</dd>
-                      </dl>
-                    </div>
-                  </dd>
-                </dl>
+                  </div>
+                ) : (
+                  <dl>
+                    <dd>
+                      <div>
+                        <dl>
+                          <dt>Spindle</dt>
+                          <dd>{customer.spindle}</dd>
+                        </dl>
+                      </div>
+                      <div>
+                        <dl>
+                          <dt>Tooling</dt>
+                          <dd>{customer.tooling}</dd>
+                        </dl>
+                      </div>
+                      <div>
+                        <dl>
+                          <dt>Coolant</dt>
+                          <dd>{customer.coolant}</dd>
+                        </dl>
+                      </div>
+                      <div>
+                        <dl>
+                          <dt>Indicative price</dt>
+                          <dd>{customer.price}</dd>
+                        </dl>
+                      </div>
+                    </dd>
+                  </dl>
+                )}
 
                 <p className="rep-inline-note">{customer.note}</p>
               </div>

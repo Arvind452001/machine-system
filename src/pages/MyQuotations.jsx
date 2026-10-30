@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { quotesApi } from "../api/quotesApi";
 import { showErrorAlert, showSuccessAlert } from "../utils/alert";
+import Pagination from "../components/Pagination";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+const PAGE_SIZE = 5;
 
 const MyQuotations = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -102,76 +107,95 @@ const MyQuotations = () => {
           <span>ACTIONS</span>
         </div>
         {loading ? (
-          <div style={{ padding: "32px", textAlign: "center", color: "#6c7a70" }}>
-            Loading quotations...
-          </div>
+          <LoadingSpinner text="Loading quotations from live database..." />
         ) : quotations.length === 0 ? (
           <div style={{ padding: "36px", textAlign: "center", color: "#6c7a70" }}>
             No quotations found in your account.
           </div>
         ) : (
-          quotations.map((q) => {
-            const qId = q._id || q.id;
-            const qNum = q.quoteNumber || qId;
-            const machineTitle =
-              q.machineName ||
-              q.machine?.name ||
-              q.machineSummary?.title ||
-              q.machineSummary?.name ||
-              "Configured Machine Platform";
-            const enqRef =
-              q.enquiry?.referenceNumber || q.enquiryNumber
-                ? ` · Enquiry ${q.enquiry?.referenceNumber || q.enquiryNumber}`
-                : "";
-            const statusText = q.status || "Ready";
-            const totalVal =
-              q.pricingBreakdown?.finalTotal ||
-              q.pricingBreakdown?.total ||
-              q.totalAmount ||
-              0;
+          <>
+            {quotations
+              .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+              .map((q) => {
+                const qId = q._id || q.id;
+                const qNum = q.quoteNumber || qId;
+                const machineTitle =
+                  q.machineName ||
+                  q.machine?.name ||
+                  q.machineSummary?.title ||
+                  q.machineSummary?.name ||
+                  "Configured Machine Platform";
+                const enqRef =
+                  q.enquiry?.referenceNumber || q.enquiryNumber
+                    ? ` · Enquiry ${q.enquiry?.referenceNumber || q.enquiryNumber}`
+                    : "";
+                const statusText = q.status || "Ready";
+                const totalVal =
+                  q.pricingBreakdown?.finalTotal ||
+                  q.pricingBreakdown?.total ||
+                  q.totalAmount ||
+                  (Number(q.basePrice || 0) +
+                    (Array.isArray(q.options)
+                      ? q.options.reduce(
+                          (s, o) => s + (Number(o.price || o.priceDelta) || 0),
+                          0
+                        )
+                      : 0) +
+                    Number(q.shippingFee || 0) +
+                    Number(q.installationFee || 0) -
+                    Number(q.discount || 0)) ||
+                  0;
 
-            return (
-              <div className="enquiry-row" key={qNum}>
-                <div className="enquiry-name">
-                  <strong>{machineTitle}</strong>
-                  <small>
-                    {qNum}
-                    {enqRef}
-                  </small>
-                </div>
-                <span>{formatDate(q.createdAt || q.validUntil)}</span>
-                <span
-                  className={`status-pill ${
-                    statusText.toLowerCase().includes("accept") ? "ready" : ""
-                  }`}
-                  style={{ textTransform: "capitalize" }}
-                >
-                  {statusText.replace("_", " ")}
-                </span>
-                <span>{formatPrice(totalVal)}</span>
-                <div className="d-flex align-items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline"
-                    onClick={(e) => handleDownloadPdf(e, qId, qNum)}
-                    title="Download PDF"
-                    style={{ padding: "4px 8px", fontSize: "12px" }}
-                  >
-                    <i className="bi bi-file-earmark-pdf"></i> PDF
-                  </button>
-                  <Link
-                    className="row-action"
-                    to={`/customer/quotation-details?id=${encodeURIComponent(
-                      qId || qNum
-                    )}`}
-                    aria-label={`View ${machineTitle} quotation`}
-                  >
-                    <i className="bi bi-arrow-up-right"></i>
-                  </Link>
-                </div>
-              </div>
-            );
-          })
+                return (
+                  <div className="enquiry-row" key={qNum}>
+                    <div className="enquiry-name">
+                      <strong>{machineTitle}</strong>
+                      <small>
+                        {qNum}
+                        {enqRef}
+                      </small>
+                    </div>
+                    <span>{formatDate(q.createdAt || q.validUntil)}</span>
+                    <span
+                      className={`status-pill ${
+                        statusText.toLowerCase().includes("accept") ? "ready" : ""
+                      }`}
+                      style={{ textTransform: "capitalize" }}
+                    >
+                      {statusText.replace("_", " ")}
+                    </span>
+                    <span>{formatPrice(totalVal)}</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline"
+                        onClick={(e) => handleDownloadPdf(e, qId, qNum)}
+                        title="Download PDF"
+                        style={{ padding: "4px 8px", fontSize: "12px" }}
+                      >
+                        <i className="bi bi-file-earmark-pdf"></i> PDF
+                      </button>
+                      <Link
+                        className="row-action"
+                        to={`/customer/quotation-details?id=${encodeURIComponent(
+                          qId || qNum
+                        )}`}
+                        aria-label={`View ${machineTitle} quotation`}
+                      >
+                        <i className="bi bi-arrow-up-right"></i>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={quotations.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              itemName="quotations"
+            />
+          </>
         )}
       </section>
       <div className="account-bottom">

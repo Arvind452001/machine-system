@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { enquiriesApi } from "../api/enquiriesApi";
+import Pagination from "../components/Pagination";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+const PAGE_SIZE = 6;
 
 const RepresentativeCustomers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -23,7 +28,7 @@ const RepresentativeCustomers = () => {
                 name: cust.name || e.name || "Customer",
                 company: cust.company || e.company || "Enterprise Customer",
                 location: cust.location || cust.country || e.location || "Location not specified",
-                enquiry: `${e.machineSummary?.name || e.machineTitle || e.machine || "Configured Machine"} · ${e.enquiryNumber || e._id || ""}`,
+                enquiry: `${(typeof e.machine === "object" ? (e.machine?.name || e.machine?.title) : (e.machineSummary?.name || e.machineTitle || e.machine)) || "Configured Machine"} · ${e.enquiryNumber || e._id || ""}`,
                 phone: cust.phone || e.phone || "—",
               };
             });
@@ -87,9 +92,7 @@ const RepresentativeCustomers = () => {
         </div>
 
         {loading ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted, #666)" }}>
-            Loading live customer directory...
-          </div>
+          <LoadingSpinner text="Loading live customer directory..." />
         ) : customers.length === 0 ? (
           <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--muted, #666)" }}>
             <p style={{ margin: 0, fontWeight: 600 }}>No customers found in your territory.</p>
@@ -98,26 +101,37 @@ const RepresentativeCustomers = () => {
             </small>
           </div>
         ) : (
-          customers.map((c) => (
-            <article
-              className="rep-enquiry-row rep-customer-row"
-              key={c.key}
-            >
-              <div>
-                <small>{c.role}</small>
-                <strong>{c.name}</strong>
-                <span>{c.company}</span>
-              </div>
-              <span>{c.location}</span>
-              <span>{c.enquiry}</span>
-              <Link
-                className="button button-dark"
-                to={c.enquiryId ? `/representative/enquiry-details?id=${c.enquiryId}` : `/representative/customer-details?customer=${c.key}`}
-              >
-                <i className="bi bi-person-lines-fill"></i> View Details
-              </Link>
-            </article>
-          ))
+          <>
+            {customers
+              .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+              .map((c) => (
+                <article
+                  className="rep-enquiry-row rep-customer-row"
+                  key={c.key}
+                >
+                  <div>
+                    <small>{c.role}</small>
+                    <strong>{c.name}</strong>
+                    <span>{c.company}</span>
+                  </div>
+                  <span>{c.location}</span>
+                  <span>{c.enquiry}</span>
+                  <Link
+                    className="button button-dark"
+                    to={c.enquiryId ? `/representative/enquiry-details?id=${c.enquiryId}` : `/representative/customer-details?customer=${c.key}`}
+                  >
+                    <i className="bi bi-person-lines-fill"></i> View Details
+                  </Link>
+                </article>
+              ))}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={customers.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              itemName="customers"
+            />
+          </>
         )}
       </section>
 

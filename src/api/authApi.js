@@ -67,23 +67,6 @@ export const authApi = {
     };
     return axiosInstance.put("/api/v1/auth/update-profile", payload);
   },
-
-  /**
-   * Request password reset link
-   * @param {Object} data - { email }
-   */
-  forgotPassword: (data) => {
-    return axiosInstance.post("/api/v1/auth/forgot-password", data);
-  },
-
-  /**
-   * Reset password with reset token
-   * @param {string} resetToken
-   * @param {Object} data - { password }
-   */
-  resetPassword: (resetToken, data) => {
-    return axiosInstance.put(`/api/v1/auth/reset-password/${resetToken}`, data);
-  },
 };
 
 export default authApi;

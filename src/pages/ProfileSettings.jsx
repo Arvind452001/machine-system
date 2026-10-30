@@ -245,7 +245,16 @@ const ProfileSettings = () => {
         <div className="profile-form-actions profile-between-cards-actions mb-5">
           <p>Profile information is securely saved in your database account.</p>
           <button className="button button-dark" type="submit" disabled={savingProfile}>
-            {savingProfile ? "Saving..." : "Save changes"} <i className="bi bi-check2"></i>
+            {savingProfile ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                Save changes <i className="bi bi-check2"></i>
+              </>
+            )}
           </button>
         </div>
       </form>
@@ -396,7 +405,16 @@ const ProfileSettings = () => {
           <div className="profile-form-actions password-form-actions">
             <p>Your password is encrypted using modern bcrypt hashing.</p>
             <button className="button button-dark" type="submit" disabled={savingPassword}>
-              {savingPassword ? "Updating..." : "Update password"} <i className="bi bi-shield-lock"></i>
+              {savingPassword ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  Update password <i className="bi bi-shield-lock"></i>
+                </>
+              )}
             </button>
           </div>
         </section>

@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { machinesApi } from "../api/machinesApi";
+import Pagination from "../components/Pagination";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+const PAGE_SIZE = 6;
 
 const MyMachines = () => {
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -61,64 +66,59 @@ const MyMachines = () => {
       </div>
 
       <section className="my-machines-grid">
-        {machines.length > 0 ? (
-          machines.map((m) => {
-            const img =
-              m.images?.[0] ||
-              "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
-            const tag = `${m.sku || m.slug?.toUpperCase() || "MS"} · ${(
-              m.category || "CNC"
-            ).toUpperCase()}`;
-            const price = m.basePrice
-              ? `$${Number(m.basePrice).toLocaleString()}`
-              : "Contact";
-
-            return (
-              <Link
-                key={m._id || m.slug}
-                className="my-machine-card"
-                to={`/machine-details?id=${m.slug || m._id}`}
-              >
-                <div className="my-machine-image">
-                  <img src={img} alt={m.name} loading="lazy" />
-                  <span>{tag}</span>
-                  <i className="bi bi-arrow-up-right"></i>
-                </div>
-                <div className="my-machine-copy">
-                  <small>
-                    {m.summary || m.category?.toUpperCase() || "PLATFORM"}
-                  </small>
-                  <h2>{m.name}</h2>
-                  <p>
-                    {m.description
-                      ? m.description.length > 90
-                        ? `${m.description.slice(0, 90)}...`
-                        : m.description
-                      : "Compact, accurate machining platform for flexible production."}
-                  </p>
-                  <div>
-                    <span>
-                      From <strong>{price}</strong>
-                    </span>
-                    <span>
-                      View machine <i className="bi bi-arrow-right"></i>
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })
-        ) : loading ? (
-          <div
-            style={{
-              padding: "32px",
-              textAlign: "center",
-              gridColumn: "1 / -1",
-              color: "#6b7c72",
-            }}
-          >
-            Loading machine platforms...
+        {loading ? (
+          <div style={{ gridColumn: "1 / -1" }}>
+            <LoadingSpinner text="Loading machine platforms from catalogue..." />
           </div>
+        ) : machines.length > 0 ? (
+          machines
+            .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+            .map((m) => {
+              const img =
+                m.images?.[0] ||
+                "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
+              const tag = `${m.sku || m.slug?.toUpperCase() || "MS"} · ${(
+                m.category || "CNC"
+              ).toUpperCase()}`;
+              const price = m.basePrice
+                ? `$${Number(m.basePrice).toLocaleString()}`
+                : "Contact";
+
+              return (
+                <Link
+                  key={m._id || m.slug}
+                  className="my-machine-card"
+                  to={`/machine-details?id=${m.slug || m._id}`}
+                >
+                  <div className="my-machine-image">
+                    <img src={img} alt={m.name} loading="lazy" />
+                    <span>{tag}</span>
+                    <i className="bi bi-arrow-up-right"></i>
+                  </div>
+                  <div className="my-machine-copy">
+                    <small>
+                      {m.summary || m.category?.toUpperCase() || "PLATFORM"}
+                    </small>
+                    <h2>{m.name}</h2>
+                    <p>
+                      {m.description
+                        ? m.description.length > 90
+                          ? `${m.description.slice(0, 90)}...`
+                          : m.description
+                        : "Compact, accurate machining platform for flexible production."}
+                    </p>
+                    <div>
+                      <span>
+                        From <strong>{price}</strong>
+                      </span>
+                      <span>
+                        View machine <i className="bi bi-arrow-right"></i>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
         ) : (
           <div
             style={{
@@ -145,6 +145,18 @@ const MyMachines = () => {
           </div>
         )}
       </section>
+
+      {!loading && machines.length > 0 && (
+        <div style={{ marginTop: "16px", background: "#fff", borderRadius: "8px", overflow: "hidden", border: "1px solid #e1e6e0" }}>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={machines.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+            itemName="machine platforms"
+          />
+        </div>
+      )}
 
       <div className="account-bottom">
         <span className="account-help">

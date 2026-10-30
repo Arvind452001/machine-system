@@ -184,6 +184,38 @@ const Configure = () => {
 
   const totalPrice = basePrice + optionsPriceDelta;
 
+  // Format selected options for Swagger-compatible enquiry payload
+  const formattedSelectedOptions = Object.entries(selectedOptions)
+    .filter(([_, optId]) => optId && optId !== "none")
+    .map(([catKey, optId]) => {
+      const opt = (groupedCategories[catKey] || []).find(
+        (o) => (o._id || o.code) === optId
+      );
+      return {
+        name: opt?.name || opt?.label || "Option",
+        priceDelta: Number(opt?.priceDelta) || 0,
+      };
+    });
+
+  const enquiryConfig = {
+    machineId: machine?._id || machineParam || "",
+    machineName: machineName || "Machine Platform",
+    machineCode: machineSku || "MD-SYS",
+    calculatedTotal: totalPrice,
+    selectedOptions: formattedSelectedOptions,
+  };
+
+  const handleSaveEnquiryConfig = () => {
+    try {
+      localStorage.setItem(
+        "machine_configured_enquiry",
+        JSON.stringify(enquiryConfig)
+      );
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const handleCategorySelect = (category, optId) => {
     setSelectedOptions((prev) => ({
       ...prev,
@@ -458,7 +490,11 @@ const Configure = () => {
                     machineName
                   )}&price=${totalPrice}&sku=${encodeURIComponent(
                     machineSku
+                  )}&machineId=${encodeURIComponent(
+                    machine?._id || machineParam || ""
                   )}&configured=true`}
+                  state={enquiryConfig}
+                  onClick={handleSaveEnquiryConfig}
                 >
                   <i className="bi bi-chat-dots"></i> Request Quote for this
                   Build
@@ -498,7 +534,11 @@ const Configure = () => {
             className="contact-action"
             to={`/enquiry?machine=${encodeURIComponent(
               machineName
-            )}&price=${totalPrice}&sku=${encodeURIComponent(machineSku)}`}
+            )}&price=${totalPrice}&sku=${encodeURIComponent(
+              machineSku
+            )}&machineId=${encodeURIComponent(machine?._id || machineParam || "")}`}
+            state={enquiryConfig}
+            onClick={handleSaveEnquiryConfig}
           >
             Continue to enquiry <i className="bi bi-arrow-up-right"></i>
           </Link>

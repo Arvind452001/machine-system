@@ -17,8 +17,6 @@ import Contact from "./pages/Contact";
 import Enquiry from "./pages/Enquiry";
 import EnquiryDetails from "./pages/EnquiryDetails";
 import LogIn from "./pages/LogIn";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 
@@ -42,6 +40,7 @@ import RepresentativeEnquiries from "./pages/RepresentativeEnquiries";
 import RepresentativeEnquiryDetails from "./pages/RepresentativeEnquiryDetails";
 import RepresentativeNewEnquiry from "./pages/RepresentativeNewEnquiry";
 import RepresentativeQuotes from "./pages/RepresentativeQuotes";
+import RepresentativeQuoteDetails from "./pages/RepresentativeQuoteDetails";
 import RepresentativeCustomers from "./pages/RepresentativeCustomers";
 import RepresentativeCustomerDetails from "./pages/RepresentativeCustomerDetails";
 import RepresentativeProfile from "./pages/RepresentativeProfile";
@@ -168,22 +167,6 @@ function App() {
               </GuestRoute>
             }
           />
-          <Route
-            path="/forgot-password"
-            element={
-              <GuestRoute>
-                <ForgotPassword />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/reset-password/:token"
-            element={
-              <GuestRoute>
-                <ResetPassword />
-              </GuestRoute>
-            }
-          />
 
           {/* Explicit Customer & Representative Login / Signup Aliases */}
           <Route path="/customer/login" element={<SmartAuthRedirect />} />
@@ -234,6 +217,7 @@ function App() {
               <Route path="enquiry-details" element={<RepresentativeEnquiryDetails />} />
               <Route path="new-enquiry" element={<RepresentativeNewEnquiry />} />
               <Route path="quotes" element={<RepresentativeQuotes />} />
+              <Route path="quote-details" element={<RepresentativeQuoteDetails />} />
               <Route path="customers" element={<RepresentativeCustomers />} />
               <Route path="customer-details" element={<RepresentativeCustomerDetails />} />
               <Route path="profile" element={<RepresentativeProfile />} />
@@ -246,6 +230,7 @@ function App() {
           <Route path="/representative-enquiry-details" element={<Navigate to="/representative/enquiry-details" replace />} />
           <Route path="/representative-new-enquiry" element={<Navigate to="/representative/new-enquiry" replace />} />
           <Route path="/representative-quotes" element={<Navigate to="/representative/quotes" replace />} />
+          <Route path="/representative-quote-details" element={<Navigate to="/representative/quote-details" replace />} />
           <Route path="/representative-customers" element={<Navigate to="/representative/customers" replace />} />
           <Route path="/representative-customer-details" element={<Navigate to="/representative/customer-details" replace />} />
           <Route path="/customer-details" element={<Navigate to="/representative/customer-details" replace />} />

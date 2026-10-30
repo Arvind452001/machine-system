@@ -33,7 +33,7 @@ const RepresentativeSidebar = () => {
           className={({ isActive }) => (isActive ? "active" : "")}
         >
           <i className="bi bi-inbox"></i> Assigned enquiries{" "}
-          <span className="rep-nav-count">3</span>
+          <span className="rep-nav-count"></span>
         </NavLink>
         <NavLink
           to="/representative/quotes"

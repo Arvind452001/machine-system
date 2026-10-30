@@ -4,11 +4,17 @@ import { apiClient } from "../api/client";
 import { machinesApi } from "../api/machinesApi";
 import { enquiriesApi } from "../api/enquiriesApi";
 import { useAuth } from "../context/AuthContext";
+import Pagination from "../components/Pagination";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+const PAGE_SIZE = 5;
 
 const CustomerWorkspace = () => {
   const { user } = useAuth();
   const [machines, setMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(true);
+  const [loadingEnquiries, setLoadingEnquiries] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [metrics, setMetrics] = useState({
     openEnquiries: 0,
     quotesReady: 0,
@@ -77,6 +83,8 @@ const CustomerWorkspace = () => {
         }
       } catch (err) {
         console.warn("Could not fetch my enquiries for workspace:", err.message);
+      } finally {
+        if (isMounted) setLoadingEnquiries(false);
       }
     };
 
@@ -196,13 +204,11 @@ const CustomerWorkspace = () => {
           ) : loadingMachines ? (
             <div
               style={{
-                padding: "32px",
-                textAlign: "center",
                 gridColumn: "1 / -1",
-                color: "#6b7c72",
+                textAlign: "center",
               }}
             >
-              Loading machine platforms...
+              <LoadingSpinner text="Loading machine platforms..." minHeight="140px" size="1.8rem" />
             </div>
           ) : (
             <div
@@ -247,7 +253,13 @@ const CustomerWorkspace = () => {
                 </tr>
               </thead>
               <tbody>
-                {recentEnquiries.length > 0 ? (
+                {loadingEnquiries ? (
+                  <tr>
+                    <td colSpan="5">
+                      <LoadingSpinner text="Loading recent enquiries..." minHeight="140px" size="1.8rem" />
+                    </td>
+                  </tr>
+                ) : recentEnquiries.length > 0 ? (
                   recentEnquiries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((enq) => {
                     const refNum =
                       enq.referenceNumber ||
@@ -313,7 +325,9 @@ const CustomerWorkspace = () => {
                 )}
               </tbody>
             </table>
-            <Pagination currentPage={currentPage} totalItems={recentEnquiries.length} pageSize={PAGE_SIZE} onPageChange={setCurrentPage} itemName="enquiries" />
+            {!loadingEnquiries && (
+              <Pagination currentPage={currentPage} totalItems={recentEnquiries.length} pageSize={PAGE_SIZE} onPageChange={setCurrentPage} itemName="enquiries" />
+            )}
           </div>
         </section>
 

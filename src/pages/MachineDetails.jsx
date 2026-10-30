@@ -322,7 +322,30 @@ const MachineDetails = () => {
                         machineName
                       )}&price=${basePrice}&sku=${encodeURIComponent(
                         machineSku
-                      )}`}
+                      )}&machineId=${encodeURIComponent(machine?._id || "")}`}
+                      state={{
+                        machineId: machine?._id || "",
+                        machineName,
+                        machineCode: machineSku,
+                        calculatedTotal: basePrice,
+                        selectedOptions: [],
+                      }}
+                      onClick={() => {
+                        try {
+                          localStorage.setItem(
+                            "machine_configured_enquiry",
+                            JSON.stringify({
+                              machineId: machine?._id || "",
+                              machineName,
+                              machineCode: machineSku,
+                              calculatedTotal: basePrice,
+                              selectedOptions: [],
+                            })
+                          );
+                        } catch (e) {
+                          // ignore
+                        }
+                      }}
                     >
                       Enquiry Now <i className="bi bi-chat-dots"></i>
                     </Link>

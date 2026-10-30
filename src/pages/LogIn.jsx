@@ -14,6 +14,7 @@ const LogIn = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // If already logged in, do not show login page - redirect straight to dashboard
   if (isAuthenticated) {
@@ -37,26 +38,31 @@ const LogIn = () => {
       return;
     }
 
-    const result = await login(email, password, role);
+    setLoading(true);
+    try {
+      const result = await login(email, password, role);
 
-    if (result.success) {
-      await showSuccessAlert("Welcome Back", "Authentication successful.");
-      const fromPath = location.state?.from?.pathname;
-      const defaultDashboard =
-        result.user.role === "representative"
-          ? "/representative/dashboard"
-          : "/customer/dashboard";
+      if (result.success) {
+        await showSuccessAlert("Welcome Back", "Authentication successful.");
+        const fromPath = location.state?.from?.pathname;
+        const defaultDashboard =
+          result.user.role === "representative"
+            ? "/representative/dashboard"
+            : "/customer/dashboard";
 
-      const validDestination =
-        fromPath && fromPath !== "/login" && fromPath !== "/signup"
-          ? fromPath
-          : defaultDashboard;
+        const validDestination =
+          fromPath && fromPath !== "/login" && fromPath !== "/signup"
+            ? fromPath
+            : defaultDashboard;
 
-      navigate(validDestination, { replace: true });
-    } else {
-      const failMsg = result.message || "Login failed. Please verify credentials.";
-      setErrorMessage(failMsg);
-      showErrorAlert("Login Failed", failMsg);
+        navigate(validDestination, { replace: true });
+      } else {
+        const failMsg = result.message || "Login failed. Please verify credentials.";
+        setErrorMessage(failMsg);
+        showErrorAlert("Login Failed", failMsg);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -221,18 +227,28 @@ const LogIn = () => {
                 />{" "}
                 Keep me signed in
               </label>
-              <Link to="/forgot-password">Forgot password?</Link>
+              <Link to="/contact">Forgot password?</Link>
             </div>
 
             <button
               type="submit"
               className="button button-lime"
-              style={{ width: "100%", justifyContent: "center", cursor: "pointer" }}
+              style={{ width: "100%", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer" }}
+              disabled={loading}
             >
-              {isCustomer
-                ? "Sign in as Customer"
-                : "Sign in as Representative"}
-              <i className="bi bi-arrow-right"></i>
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  {isCustomer
+                    ? "Sign in as Customer"
+                    : "Sign in as Representative"}
+                  <i className="bi bi-arrow-right"></i>
+                </>
+              )}
             </button>
 
             <p className="auth-switch">

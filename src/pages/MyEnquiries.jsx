@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { enquiriesApi } from "../api/enquiriesApi";
+import Pagination from "../components/Pagination";
+import LoadingSpinner from "../components/LoadingSpinner";
 
-
+const PAGE_SIZE = 6;
 
 const MyEnquiries = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -128,39 +131,48 @@ const MyEnquiries = () => {
           <span></span>
         </div>
         {loading ? (
-          <div style={{ padding: "24px", textAlign: "center", color: "#6c7a70" }}>
-            Loading enquiries...
-          </div>
+          <LoadingSpinner text="Loading enquiries from live database..." />
         ) : enquiries.length === 0 ? (
-          <div style={{ padding: "24px", textAlign: "center", color: "#6c7a70" }}>
-            No enquiries found.
+          <div style={{ padding: "36px 20px", textAlign: "center", color: "#6c7a70" }}>
+            No enquiries found in your account.
           </div>
         ) : (
-          enquiries.map((enq) => {
-            const isReady =
-              enq.status === "Quote ready" || enq.status === "Ready · 30 days";
+          <>
+            {enquiries
+              .slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+              .map((enq) => {
+                const isReady =
+                  enq.status === "Quote ready" || enq.status === "Ready · 30 days";
 
-            return (
-              <div className="enquiry-row" key={enq.id}>
-                <div className="enquiry-name">
-                  <strong>{enq.machine}</strong>
-                  <small>{enq.id}</small>
-                </div>
-                <span>{enq.received}</span>
-                <span className={`status-pill ${isReady ? "ready" : ""}`}>
-                  {enq.status}
-                </span>
-                <span>{enq.price}</span>
-                <Link
-                  className="row-action"
-                  to={`/customer/enquiry-details?id=${enq.rawId || enq.id}`}
-                  aria-label={`View ${enq.machine} enquiry`}
-                >
-                  <i className="bi bi-arrow-up-right"></i>
-                </Link>
-              </div>
-            );
-          })
+                return (
+                  <div className="enquiry-row" key={enq.id}>
+                    <div className="enquiry-name">
+                      <strong>{enq.machine}</strong>
+                      <small>{enq.id}</small>
+                    </div>
+                    <span>{enq.received}</span>
+                    <span className={`status-pill ${isReady ? "ready" : ""}`}>
+                      {enq.status}
+                    </span>
+                    <span>{enq.price}</span>
+                    <Link
+                      className="row-action"
+                      to={`/customer/enquiry-details?id=${enq.rawId || enq.id}`}
+                      aria-label={`View ${enq.machine} enquiry`}
+                    >
+                      <i className="bi bi-arrow-up-right"></i>
+                    </Link>
+                  </div>
+                );
+              })}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={enquiries.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              itemName="enquiries"
+            />
+          </>
         )}
       </section>
 

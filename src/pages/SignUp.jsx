@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { showSuccessAlert, showErrorAlert } from "../utils/alert";
@@ -427,7 +427,10 @@ const SignUp = () => {
                   }}
                 >
                   {loading ? (
-                    "Sending verification code..."
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Sending verification code...
+                    </>
                   ) : (
                     <>
                       Continue to verification
@@ -581,7 +584,10 @@ const SignUp = () => {
                   }}
                 >
                   {loading ? (
-                    "Verifying..."
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Verifying code...
+                    </>
                   ) : (
                     <>
                       Verify & Activate Account

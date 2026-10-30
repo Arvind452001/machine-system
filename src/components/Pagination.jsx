@@ -1,5 +1,3 @@
-import React from "react";
-
 const Pagination = ({
   currentPage = 1,
   totalItems = 0,
@@ -99,9 +97,9 @@ const Pagination = ({
                   width: "30px",
                   height: "30px",
                   placeItems: "center",
-                  border: isCurrent ? "1px solid #0284c7" : "1px solid #d1d5db",
+                  border: isCurrent ? "1px solid #e97853" : "1px solid #d1d5db",
                   borderRadius: "6px",
-                  background: isCurrent ? "#0284c7" : "#fff",
+                  background: isCurrent ? "#e97853" : "#fff",
                   color: isCurrent ? "#fff" : "#374151",
                   fontWeight: isCurrent ? "700" : "500",
                   cursor: "pointer",

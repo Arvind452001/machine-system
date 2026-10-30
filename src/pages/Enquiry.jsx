@@ -1,18 +1,59 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { enquiriesApi } from "../api/enquiriesApi";
+import { machinesApi } from "../api/machinesApi";
 import { useAuth } from "../context/AuthContext";
 import { showErrorAlert, showSuccessAlert } from "../utils/alert";
 
 const Enquiry = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
 
+  // Retrieve configuration from router state or saved localStorage
+  const locationState = location.state || {};
+  let savedConfig = null;
+  try {
+    const raw = localStorage.getItem("machine_configured_enquiry");
+    if (raw) savedConfig = JSON.parse(raw);
+  } catch (e) {
+    // ignore
+  }
+
   const queryMachineName =
-    searchParams.get("machine") || "Industrial Machinery Platform";
-  const queryPrice = Number(searchParams.get("price")) || 0;
-  const querySku = searchParams.get("sku") || "MD-SYS";
+    searchParams.get("machine") ||
+    locationState.machineName ||
+    savedConfig?.machineName ||
+    "Axis 400 · Precision CNC lathe";
+  const queryPrice =
+    Number(searchParams.get("price")) ||
+    Number(locationState.calculatedTotal) ||
+    Number(savedConfig?.calculatedTotal) ||
+    0;
+  const querySku =
+    searchParams.get("sku") ||
+    locationState.machineCode ||
+    savedConfig?.machineCode ||
+    "AX-400";
+  const initialMachineId =
+    searchParams.get("machineId") ||
+    searchParams.get("id") ||
+    locationState.machineId ||
+    savedConfig?.machineId ||
+    "";
+  const initialOptions =
+    locationState.selectedOptions ||
+    savedConfig?.selectedOptions ||
+    [];
+
+  const [machineId, setMachineId] = useState(initialMachineId);
+  const [machineName, setMachineName] = useState(queryMachineName);
+  const [machineCode, setMachineCode] = useState(querySku);
+  const [calculatedTotal, setCalculatedTotal] = useState(queryPrice);
+  const [selectedOptions, setSelectedOptions] = useState(
+    Array.isArray(initialOptions) ? initialOptions : []
+  );
 
   const [formData, setFormData] = useState({
     firstName: user?.name ? user.name.split(" ")[0] : "",
@@ -20,14 +61,17 @@ const Enquiry = () => {
     email: user?.email || "",
     phone: user?.phone || "",
     company: user?.company || "",
-    country: user?.region || "United States",
-    timeline: "Within 3 months",
-    message: "",
+    country: user?.region || user?.country || "United States",
+    whenToInstall: "Within 1-3 months",
+    whatShouldWeKnow: "",
+    contactConsent: true,
   });
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Sync user profile data if available
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -42,10 +86,66 @@ const Enquiry = () => {
     }
   }, [user]);
 
+  // Lookup machine from API to populate machineId & default options if not yet provided
+  useEffect(() => {
+    let mounted = true;
+    machinesApi
+      .getMachines()
+      .then((res) => {
+        if (!mounted) return;
+        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        if (list.length === 0) return;
+
+        const match = list.find((m) => {
+          if (initialMachineId && m._id === initialMachineId) return true;
+          if (querySku && (m.sku?.toLowerCase() === querySku.toLowerCase() || m.code?.toLowerCase() === querySku.toLowerCase())) return true;
+          if (queryMachineName && m.name?.toLowerCase() === queryMachineName.toLowerCase()) return true;
+          if (querySku && m.slug?.toLowerCase() === querySku.toLowerCase()) return true;
+          return false;
+        });
+
+        if (match) {
+          if (!machineId) setMachineId(match._id);
+          if (!machineName || machineName === "Industrial Machinery Platform") {
+            setMachineName(match.name);
+          }
+          if (!machineCode || machineCode === "MD-SYS") {
+            setMachineCode(match.sku || match.code || querySku);
+          }
+          if (!calculatedTotal && match.basePrice) {
+            setCalculatedTotal(Number(match.basePrice));
+          }
+          setSelectedOptions((prev) => {
+            if (Array.isArray(prev) && prev.length > 0) return prev;
+            if (Array.isArray(match.availableOptions) && match.availableOptions.length > 0) {
+              return match.availableOptions
+                .filter((o) => o && (o.isDefault || Number(o.priceDelta) === 0))
+                .map((o) => ({
+                  name: o.name || o.label || "Standard option",
+                  priceDelta: Number(o.priceDelta) || 0,
+                }));
+            }
+            return [];
+          });
+        } else if (!machineId && list[0]?._id) {
+          setMachineId(list[0]._id);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch machines list in Enquiry:", err.message);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [initialMachineId, querySku, queryMachineName]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -65,21 +165,48 @@ const Enquiry = () => {
     setSuccessMsg("");
 
     try {
+      const activeMachineId =
+        machineId || initialMachineId || "6ad9fc28e39daefd54e568ff";
+      const activeMachineName =
+        machineName || queryMachineName || "Axis 400 · Precision CNC lathe";
+      const activeMachineCode = machineCode || querySku || "AX-400";
+      const activeCalculatedTotal = Number(
+        calculatedTotal || queryPrice || 0
+      );
+      const activeSelectedOptions =
+        Array.isArray(selectedOptions) && selectedOptions.length > 0
+          ? selectedOptions
+          : [];
+
+      // Send complete payload strictly matching Swagger specification
       const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        name: `${formData.firstName} ${formData.lastName}`.trim() || formData.email,
-        email: formData.email,
-        phone: formData.phone,
-        company: formData.company,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company.trim(),
         country: formData.country,
-        timeline: formData.timeline,
-        message: formData.message || `Enquiry regarding ${queryMachineName}.`,
-        machine: queryMachineName,
-        machineTitle: `${queryMachineName} · Industrial System`,
-        machineCode: querySku,
+        whenToInstall: formData.whenToInstall || "Within 1-3 months",
+        whatShouldWeKnow:
+          formData.whatShouldWeKnow.trim() ||
+          `Looking for information regarding ${activeMachineName}.`,
+        machineCode: activeMachineCode,
+        machineName: activeMachineName,
+        machineId: activeMachineId,
+        calculatedTotal: activeCalculatedTotal,
+        selectedOptions: activeSelectedOptions,
+        contactConsent: Boolean(formData.contactConsent),
+
+        // Backward compatibility attributes for legacy services
+        name: `${formData.firstName} ${formData.lastName}`.trim() || formData.email,
+        timeline: formData.whenToInstall || "Within 1-3 months",
+        message:
+          formData.whatShouldWeKnow.trim() ||
+          `Looking for information regarding ${activeMachineName}.`,
+        machine: activeMachineName,
+        machineTitle: `${activeMachineName} · Industrial System`,
         quantity: 1,
-        indicativePrice: queryPrice,
+        indicativePrice: activeCalculatedTotal,
       };
 
       const res = await enquiriesApi.createEnquiry(payload);
@@ -334,42 +461,58 @@ const Enquiry = () => {
               </label>
               <select
                 className="form-select"
-                id="timeline"
-                name="timeline"
-                value={formData.timeline}
+                id="whenToInstall"
+                name="whenToInstall"
+                value={formData.whenToInstall}
                 onChange={handleChange}
               >
                 <option value="">Choose a timeframe</option>
-                <option>As soon as possible</option>
-                <option>Within 3 months</option>
-                <option>Within 6 months</option>
-                <option>6–12 months</option>
-                <option>Researching for now</option>
+                <option value="Within 1-3 months">Within 1-3 months</option>
+                <option value="Within 3-6 months">Within 3-6 months</option>
+                <option value="6-12 months">6–12 months</option>
+                <option value="As soon as possible">As soon as possible</option>
+                <option value="Researching for now">Researching for now</option>
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="message">
+              <label className="form-label" htmlFor="whatShouldWeKnow">
                 What should we know? <span className="optional-label">OPTIONAL</span>
               </label>
               <textarea
                 className="form-control"
-                id="message"
-                name="message"
+                id="whatShouldWeKnow"
+                name="whatShouldWeKnow"
                 rows="4"
-                placeholder="Materials, throughput, floor space, or questions for our team…"
-                value={formData.message}
+                placeholder="Looking for titanium milling capabilities, high precision tolerance, and 2 shifts/day throughput."
+                value={formData.whatShouldWeKnow}
                 onChange={handleChange}
               ></textarea>
             </div>
             <label className="consent-row">
-              <input type="checkbox" required defaultChecked />
+              <input
+                type="checkbox"
+                id="contactConsent"
+                name="contactConsent"
+                checked={formData.contactConsent}
+                onChange={handleChange}
+                required
+              />
               <span>
                 Northline Systems may contact me about this enquiry. Read our{" "}
                 <Link to="/privacy">privacy notice</Link>.
               </span>
             </label>
             <button className="button button-lime mt-3" type="submit" disabled={loading}>
-              {loading ? "Submitting enquiry..." : "Submit enquiry"} <i className="bi bi-arrow-right"></i>
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Submitting enquiry...
+                </>
+              ) : (
+                <>
+                  Submit enquiry <i className="bi bi-arrow-right"></i>
+                </>
+              )}
             </button>
             <p className="summary-note mt-3">Enquiry data is saved to the live backend database.</p>
           </form>
@@ -378,14 +521,72 @@ const Enquiry = () => {
               <i className="bi bi-bag-check"></i> CONFIGURATION SUMMARY
             </div>
             <div className="order-item">
-              <span>{querySku}</span>
-              <strong>{queryMachineName}</strong>
+              <span>{machineCode || querySku}</span>
+              <strong>{machineName || queryMachineName}</strong>
               <p>Platform specification &amp; custom options review</p>
             </div>
             <div className="order-total">
-              <span>Indicative starting price</span>
-              <strong>${queryPrice.toLocaleString()}</strong>
+              <span>Calculated Total</span>
+              <strong>${(calculatedTotal || queryPrice).toLocaleString()}</strong>
             </div>
+
+            {selectedOptions && selectedOptions.length > 0 && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  paddingTop: "14px",
+                  borderTop: "1px solid rgba(0,0,0,0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    color: "#6b7280",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Selected Options ({selectedOptions.length})
+                </div>
+                <ul
+                  style={{
+                    listStyle: "none",
+                    padding: 0,
+                    margin: 0,
+                    fontSize: "13px",
+                    display: "grid",
+                    gap: "6px",
+                  }}
+                >
+                  {selectedOptions.map((opt, idx) => (
+                    <li
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        color: "#374151",
+                      }}
+                    >
+                      <span>{opt.name}</span>
+                      <span
+                        style={{
+                          fontWeight: 600,
+                          color: opt.priceDelta > 0 ? "#0d9488" : "#9ca3af",
+                        }}
+                      >
+                        {opt.priceDelta > 0
+                          ? `+$${Number(opt.priceDelta).toLocaleString()}`
+                          : "Included"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="aside-help">
               <i className="bi bi-person-check"></i>
               <span>

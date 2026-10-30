@@ -62,6 +62,7 @@ export const apiClient = {
   updateQuoteStatus: (id, data) => quotesApi.updateStatus(id, data),
   downloadQuotePdf: (id, number) => quotesApi.downloadPdf(id, number),
   exportQuotesCsv: () => quotesApi.exportCsv(),
+  deleteQuotation: (id) => quotesApi.deleteQuote(id),
 
   // Dashboards & Telemetry (GET /api/v1/stats/...)
   getCustomerDashboard: () => statsApi.getCustomerStats(),

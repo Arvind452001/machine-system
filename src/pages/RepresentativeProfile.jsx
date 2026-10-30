@@ -243,7 +243,16 @@ const RepresentativeProfile = () => {
             <i className="bi bi-arrow-left"></i> Back to overview
           </Link>
           <button className="button button-dark" type="submit" disabled={saving}>
-            <i className="bi bi-check2"></i> {saving ? "Saving..." : "Save profile"}
+            {saving ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check2"></i> Save profile
+              </>
+            )}
           </button>
         </div>
       </form>
