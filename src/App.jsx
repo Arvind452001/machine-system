@@ -28,7 +28,6 @@ import CustomerWorkspace from "./pages/CustomerWorkspace";
 import MyEnquiries from "./pages/MyEnquiries";
 import MyQuotations from "./pages/MyQuotations";
 import QuotationDetails from "./pages/QuotationDetails";
-import QuotationExample from "./pages/QuotationExample";
 import MyMachines from "./pages/MyMachines";
 import ProfileSettings from "./pages/ProfileSettings";
 import Privacy from "./pages/Privacy";
