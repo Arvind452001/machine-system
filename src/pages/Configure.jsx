@@ -294,12 +294,16 @@ const Configure = () => {
   };
 
   const categoryLabels = {
+    coupler_top: "Top Bracket / Carrier Hitch",
+    coupler_bottom: "Bottom Quick Coupler / Quick Hitch",
+    control: "Control Unit & Joysticks",
+    gripper: "Integrated Grab / Gripper Cassette",
+    lubrication: "Central Lubrication System",
     spindle: "Spindle package",
     tooling: "Tool changer & magazine",
     cooling: "Cooling",
     enclosure: "Enclosure & safety",
     automation: "Automation & robotics interface",
-    control: "Control unit & software",
     service: "Service & warranty",
     options: "Additional options",
   };
@@ -623,7 +627,7 @@ const Configure = () => {
           </section>
         )}
 
-        <section className="home-contact" id="contact">
+        <section className="home-contact" id="contact" style={{ marginBottom: "110px" }}>
           <div className="contact-mark">
             <i className="bi bi-chat-square-text"></i>
           </div>
@@ -645,6 +649,193 @@ const Configure = () => {
             Save &amp; Proceed to Basket <i className="bi bi-arrow-up-right"></i>
           </button>
         </section>
+
+        {/* Haas-Style Sticky Floating Configuration Bar */}
+        {machine && (
+          <aside
+            className="haas-config-bar"
+            aria-label="Configuration summary and build bar"
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1040,
+              background: "rgba(18, 38, 30, 0.96)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderTop: "1px solid rgba(175, 230, 195, 0.25)",
+              boxShadow: "0 -8px 30px rgba(0, 0, 0, 0.35)",
+              color: "#ffffff",
+              padding: "12px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "20px",
+              flexWrap: "wrap",
+              transition: "all 0.3s ease",
+            }}
+          >
+            {/* Left: Machine Thumbnail & Name */}
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: "240px" }}>
+              <img
+                src={machineImage}
+                alt={machineName}
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "8px",
+                  objectFit: "cover",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  background: "#0c1f17",
+                }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src =
+                    "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80";
+                }}
+              />
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.5px",
+                      background: "rgba(183, 235, 70, 0.2)",
+                      color: "#b7eb46",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {machineSku}
+                  </span>
+                  <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.65)" }}>
+                    {formattedSelectedOptions.length} option{formattedSelectedOptions.length === 1 ? "" : "s"} selected
+                  </span>
+                </div>
+                <div style={{ fontSize: "15px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>
+                  {machineName}
+                </div>
+              </div>
+            </div>
+
+            {/* Middle: Live Pricing Breakdown */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+                padding: "0 16px",
+                borderLeft: "1px solid rgba(255, 255, 255, 0.15)",
+                borderRight: "1px solid rgba(255, 255, 255, 0.15)",
+              }}
+            >
+              <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.7)" }}>
+                <div>Base: ${basePrice.toLocaleString()}</div>
+                <div>
+                  Options:{" "}
+                  <span style={{ color: optionsPriceDelta > 0 ? "#b7eb46" : "#ffffff" }}>
+                    +${optionsPriceDelta.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "10px",
+                    letterSpacing: "0.8px",
+                    color: "rgba(255, 255, 255, 0.6)",
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                  }}
+                >
+                  Configured Price (USD)
+                </span>
+                <span
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 800,
+                    color: "#b7eb46",
+                    letterSpacing: "-0.5px",
+                  }}
+                >
+                  ${totalPrice.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Action Buttons */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Link
+                to="/basket"
+                className="btn btn-outline-light btn-sm"
+                style={{
+                  borderRadius: "6px",
+                  padding: "8px 14px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  borderColor: "rgba(255, 255, 255, 0.35)",
+                }}
+              >
+                <i className="bi bi-cart3"></i> Basket
+                {basket.length > 0 && (
+                  <span
+                    style={{
+                      background: "#b7eb46",
+                      color: "#12261e",
+                      borderRadius: "10px",
+                      padding: "1px 6px",
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      marginLeft: "2px",
+                    }}
+                  >
+                    {basket.length}
+                  </span>
+                )}
+              </Link>
+
+              <button
+                type="button"
+                className="button button-lime"
+                onClick={handleSaveConfiguration}
+                disabled={isSaving}
+                style={{
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "10px 22px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: isSaving ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 14px rgba(183, 235, 70, 0.35)",
+                  background: "#b7eb46",
+                  color: "#12261e",
+                }}
+              >
+                {isSaving ? (
+                  <>
+                    <div className="spinner-border spinner-border-sm" role="status"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check2-circle" style={{ fontSize: "16px" }}></i>
+                    <span>Save to Basket</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </aside>
+        )}
       </main>
     </div>
   );
