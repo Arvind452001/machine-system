@@ -240,14 +240,40 @@ const MyMachines = () => {
                 : 0;
 
               return (
-                <div
-                  key={s._id}
-                  className="my-machine-card"
-                  style={{ position: "relative" }}
-                >
+                <div key={s._id} className="my-machine-card">
                   <div className="my-machine-image">
-                    <img src={img} alt={baseMachine.name} loading="lazy" />
-                    <span>{tag}</span>
+                    <img
+                      src={img}
+                      alt={baseMachine.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
+                      }}
+                    />
+                    
+                    {/* Top-Left Category / SKU Tag */}
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "rgba(17, 24, 39, 0.78)",
+                        color: "#ffffff",
+                        backdropFilter: "blur(4px)",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "0.06em",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        zIndex: 2,
+                      }}
+                    >
+                      {tag}
+                    </span>
+
+                    {/* Top-Right Refined Trash Button */}
                     <button
                       type="button"
                       onClick={(e) =>
@@ -258,83 +284,128 @@ const MyMachines = () => {
                         position: "absolute",
                         top: "10px",
                         right: "10px",
-                        background: "rgba(220, 53, 69, 0.9)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: "28px",
-                        height: "28px",
+                        background: "rgba(255, 255, 255, 0.92)",
+                        backdropFilter: "blur(4px)",
+                        color: "#6b7280",
+                        border: "1px solid rgba(0, 0, 0, 0.08)",
+                        borderRadius: "6px",
+                        width: "30px",
+                        height: "30px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         cursor: "pointer",
                         zIndex: 2,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#fef2f2";
+                        e.currentTarget.style.color = "#dc2626";
+                        e.currentTarget.style.borderColor = "#fecaca";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.92)";
+                        e.currentTarget.style.color = "#6b7280";
+                        e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)";
                       }}
                     >
                       <i className="bi bi-trash" style={{ fontSize: "13px" }}></i>
                     </button>
                   </div>
+
                   <div className="my-machine-copy">
-                    <small>
-                      {optionsCount > 0
-                        ? `${optionsCount} CUSTOM OPTION${
-                            optionsCount > 1 ? "S" : ""
-                          } ATTACHED`
-                        : "STANDARD BUILD"}
-                    </small>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          letterSpacing: "0.04em",
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          background: optionsCount > 0 ? "#ecfdf5" : "#f3f4f6",
+                          color: optionsCount > 0 ? "#065f46" : "#4b5563",
+                          border: optionsCount > 0 ? "1px solid #a7f3d0" : "1px solid #e5e7eb",
+                        }}
+                      >
+                        {optionsCount > 0
+                          ? `${optionsCount} CUSTOM OPTION${optionsCount > 1 ? "S" : ""}`
+                          : "STANDARD BUILD"}
+                      </span>
+                    </div>
+
                     <h2>{s.configurationName || baseMachine.name}</h2>
                     <p>
                       {s.notes ||
                         baseMachine.summary ||
                         "Custom build saved for rapid requisitioning and quoting."}
                     </p>
-                    <div style={{ marginTop: "10px", marginBottom: "14px" }}>
-                      <span>
-                        Configured: <strong>{price}</strong>
-                      </span>
-                    </div>
 
                     <div
                       style={{
-                        display: "flex",
-                        gap: "8px",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        borderTop: "1px solid #f0f3f1",
-                        paddingTop: "12px",
+                        marginTop: "auto",
+                        paddingTop: "10px",
+                        borderTop: "1px solid #f0f2f0",
                       }}
                     >
-                      <button
-                        type="button"
-                        onClick={(e) => handleAddSavedToBasket(e, s)}
-                        className="button button-lime"
-                        style={{
-                          fontSize: "12px",
-                          padding: "6px 14px",
-                          border: "none",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <i className="bi bi-bag-plus"></i> Add to Basket
-                      </button>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                          Configured Price
+                        </span>
+                        <strong style={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+                          {price}
+                        </strong>
+                      </div>
 
-                      <Link
-                        to={`/configure?machine=${baseMachine.slug || baseMachine._id}`}
-                        className="button button-dark"
-                        style={{
-                          fontSize: "12px",
-                          padding: "6px 14px",
-                          textDecoration: "none",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <i className="bi bi-sliders"></i> Reconfigure
-                      </Link>
+                      {/* Side-by-Side Professional Action Buttons */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleAddSavedToBasket(e, s)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            padding: "8px 10px",
+                            background: "#c0392b",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#a93226")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#c0392b")}
+                        >
+                          <i className="bi bi-bag-plus"></i> Add to Basket
+                        </button>
+
+                        <Link
+                          to={`/configure?machine=${baseMachine.slug || baseMachine._id}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "5px",
+                            padding: "8px 10px",
+                            background: "#111827",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#273142")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#111827")}
+                        >
+                          <i className="bi bi-sliders"></i> Reconfigure
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -400,31 +471,85 @@ const MyMachines = () => {
               return (
                 <div key={m._id || m.slug} className="my-machine-card">
                   <div className="my-machine-image">
-                    <img src={img} alt={m.name} loading="lazy" />
-                    <span>{tag}</span>
+                    <img
+                      src={img}
+                      alt={m.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "rgba(17, 24, 39, 0.78)",
+                        color: "#ffffff",
+                        backdropFilter: "blur(4px)",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "0.06em",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        zIndex: 2,
+                      }}
+                    >
+                      {tag}
+                    </span>
                     <Link
                       to={`/machine-details?id=${m.slug || m._id}`}
                       style={{
                         position: "absolute",
                         top: "10px",
                         right: "10px",
-                        color: "#fff",
-                        background: "rgba(0,0,0,0.5)",
-                        borderRadius: "50%",
-                        width: "28px",
-                        height: "28px",
+                        color: "#111827",
+                        background: "rgba(255, 255, 255, 0.9)",
+                        backdropFilter: "blur(4px)",
+                        border: "1px solid rgba(0, 0, 0, 0.08)",
+                        borderRadius: "6px",
+                        width: "30px",
+                        height: "30px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        zIndex: 2,
+                        textDecoration: "none",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#c0392b";
+                        e.currentTarget.style.color = "#ffffff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)";
+                        e.currentTarget.style.color = "#111827";
                       }}
                     >
-                      <i className="bi bi-arrow-up-right"></i>
+                      <i className="bi bi-arrow-up-right" style={{ fontSize: "12px" }}></i>
                     </Link>
                   </div>
                   <div className="my-machine-copy">
-                    <small>
-                      {m.summary || m.category?.toUpperCase() || "PLATFORM"}
-                    </small>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          letterSpacing: "0.04em",
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          background: "#f3f4f6",
+                          color: "#4b5563",
+                          border: "1px solid #e5e7eb",
+                        }}
+                      >
+                        {m.category?.toUpperCase() || "CATALOGUE"}
+                      </span>
+                    </div>
+
                     <h2>{m.name}</h2>
                     <p>
                       {m.description
@@ -433,48 +558,70 @@ const MyMachines = () => {
                           : m.description
                         : "Compact, accurate machining platform for flexible production."}
                     </p>
-                    <div style={{ marginTop: "8px", marginBottom: "12px" }}>
-                      <span>
-                        Starting From <strong>{price}</strong>
-                      </span>
-                    </div>
 
                     <div
                       style={{
-                        display: "flex",
-                        gap: "8px",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        borderTop: "1px solid #f0f3f1",
-                        paddingTop: "12px",
+                        marginTop: "auto",
+                        paddingTop: "10px",
+                        borderTop: "1px solid #f0f2f0",
                       }}
                     >
-                      <Link
-                        className="button button-lime"
-                        to={`/configure?machine=${m.slug || m._id}`}
-                        style={{
-                          fontSize: "12px",
-                          padding: "6px 14px",
-                          textDecoration: "none",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <i className="bi bi-sliders"></i> Configure Build
-                      </Link>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                          Starting From
+                        </span>
+                        <strong style={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+                          {price}
+                        </strong>
+                      </div>
 
-                      <Link
-                        className="button button-dark"
-                        to={`/machine-details?id=${m.slug || m._id}`}
-                        style={{
-                          fontSize: "12px",
-                          padding: "6px 14px",
-                          textDecoration: "none",
-                        }}
-                      >
-                        Details
-                      </Link>
+                      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "8px" }}>
+                        <Link
+                          to={`/configure?machine=${m.slug || m._id}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            padding: "8px 10px",
+                            background: "#c0392b",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#a93226")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#c0392b")}
+                        >
+                          <i className="bi bi-sliders"></i> Configure
+                        </Link>
+
+                        <Link
+                          to={`/machine-details?id=${m.slug || m._id}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "5px",
+                            padding: "8px 10px",
+                            background: "#111827",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                            transition: "background 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#273142")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#111827")}
+                        >
+                          Details <i className="bi bi-arrow-up-right"></i>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
