@@ -6,14 +6,30 @@ import { faqsApi } from "../api/faqsApi";
 import { BASE_URL } from "../api/axiosInstance";
 import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 
-const DUMMY_REVIEW_AVATARS = [
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80",
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80",
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80",
-  "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=80",
+const getInitials = (name) => {
+  if (!name || typeof name !== "string") return "MS";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const AVATAR_PALETTES = [
+  { bg: "#173f35", text: "#e8fdf2", border: "#2e7456" }, // Deep Forest
+  { bg: "#3d140b", text: "#ffedd5", border: "#9a3412" }, // Terracotta Dark
+  { bg: "#1e293b", text: "#f1f5f9", border: "#475569" }, // Industrial Slate
+  { bg: "#2d2013", text: "#fef3c7", border: "#92400e" }, // Warm Bronze
+  { bg: "#0f2c3d", text: "#e0f2fe", border: "#0284c7" }, // Deep Cobalt
+  { bg: "#23272f", text: "#e2e8f0", border: "#52525b" }, // Precision Charcoal
 ];
+
+const getAvatarPalette = (str) => {
+  let hash = 0;
+  for (let i = 0; i < (str || "").length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return AVATAR_PALETTES[Math.abs(hash) % AVATAR_PALETTES.length];
+};
 
 const resolveImageUrl = (img) => {
   if (!img || img === "string") {
@@ -557,20 +573,42 @@ const Home = () => {
                 >
                   {page.map((rev, cardIdx) => {
                     const globalIdx = pageIdx * 3 + cardIdx;
-                    const photoUrl =
-                      rev.imageUrl ||
-                      rev.image ||
-                      rev.avatar ||
-                      DUMMY_REVIEW_AVATARS[globalIdx % DUMMY_REVIEW_AVATARS.length];
+                    const hasCustomPhoto = Boolean(rev.imageUrl || rev.image || rev.avatar);
+                    const photoUrl = rev.imageUrl || rev.image || rev.avatar;
+                    const initials = getInitials(rev.authorName);
+                    const palette = getAvatarPalette(rev.authorName || rev.company || "Customer");
 
                     return (
                       <figure className="testimonial-card" key={rev._id || globalIdx}>
-                        <img
-                          className="testimonial-photo"
-                          src={photoUrl}
-                          alt={`Portrait of ${rev.authorName}`}
-                          loading="lazy"
-                        />
+                        {hasCustomPhoto ? (
+                          <img
+                            className="testimonial-photo"
+                            src={photoUrl}
+                            alt={`Portrait of ${rev.authorName}`}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div
+                            className="testimonial-photo testimonial-initials-avatar"
+                            style={{
+                              backgroundColor: palette.bg,
+                              color: palette.text,
+                              border: `2px solid ${palette.border}`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "19px",
+                              fontWeight: "700",
+                              letterSpacing: "0.06em",
+                              userSelect: "none",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                            }}
+                            title={rev.authorName}
+                            aria-label={`Initials of ${rev.authorName}`}
+                          >
+                            {initials}
+                          </div>
+                        )}
                         <blockquote>“{rev.comment || rev.headline}”</blockquote>
                         <figcaption>
                           <strong>{rev.authorName}</strong>
