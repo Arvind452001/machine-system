@@ -2,9 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { machinesApi } from "../api/machinesApi";
 import { optionsApi } from "../api/optionsApi";
+import { savedMachinesApi } from "../api/savedMachinesApi";
 import { BASE_URL } from "../api/axiosInstance";
 import { useBasket } from "../context/BasketContext";
-import { showSuccessAlert } from "../utils/alert";
+import { useAuth } from "../context/AuthContext";
+import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 
 // Helper to resolve backend image paths
 const resolveImageUrl = (img) => {
@@ -63,6 +65,7 @@ const Configure = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { basket, updateBasketItemConfig, addToBasket, getBasketItem } = useBasket();
+  const { isAuthenticated } = useAuth();
 
   // Machine slug or ID from query params or URL hash
   const machineParam =
@@ -278,6 +281,21 @@ const Configure = () => {
         );
       } catch {
         // ignore
+      }
+
+      // Synchronize with customer's saved machines account in backend
+      if (isAuthenticated && machine?._id) {
+        const optionIds = formattedSelectedOptions
+          .map((o) => o.optionId)
+          .filter(Boolean);
+        savedMachinesApi
+          .saveMachine({
+            machineId: machine._id,
+            optionIds,
+            configurationName: `${machineName} (${machineSku})`,
+            notes: `Configured on ${new Date().toLocaleDateString()} with ${formattedSelectedOptions.length} option(s). Total: $${totalPrice.toLocaleString()}`,
+          })
+          .catch((e) => console.warn("Saved machine sync:", e.message));
       }
 
       await showSuccessAlert(

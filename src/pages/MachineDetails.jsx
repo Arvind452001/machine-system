@@ -396,9 +396,7 @@ const MachineDetails = () => {
                   <div className="machine-profile-kicker">APPLICATION FIT</div>
                   <h3>Where {machineName} fits your work</h3>
                   <p>
-                    {machineTagline} Ideal for facilities demanding high
-                    repeatability, continuous duty cycles, and aerospace/medical
-                    grade manufacturing.
+                    {machineTagline} Configured for high repeatability, demanding duty cycles, and precision manufacturing tolerances.
                   </p>
                   <Link to="/contact">
                     Discuss your application{" "}
@@ -409,31 +407,23 @@ const MachineDetails = () => {
               <div className="col-lg-7">
                 <div className="machine-benefits-panel">
                   <div className="machine-profile-kicker">
-                    PLATFORM HIGHLIGHTS
+                    PLATFORM HIGHLIGHTS &amp; ENGINEERING SPECS
                   </div>
                   <div className="machine-benefit-list">
-                    <div>
-                      <span>01</span>
-                      <strong>
-                        Direct-drive rotary-tilt kinematic architecture
-                      </strong>
-                      <i className="bi bi-check2"></i>
-                    </div>
-                    <div>
-                      <span>02</span>
-                      <strong>
-                        Real-time thermal compensation across all active axes
-                      </strong>
-                      <i className="bi bi-check2"></i>
-                    </div>
-                    <div>
-                      <span>03</span>
-                      <strong>
-                        Compatible with automated robotic cells &amp; pallet
-                        changers
-                      </strong>
-                      <i className="bi bi-check2"></i>
-                    </div>
+                    {(specsList.length >= 3
+                      ? specsList.slice(0, 3).map(([k, v]) => `${k}: ${v}`)
+                      : [
+                          machine.summary || `${machineName} high-performance platform architecture`,
+                          `Engineered for ${machineCategory} high-repeatability production cycles`,
+                          "Full compatibility with modular packages & quick automated integration",
+                        ]
+                    ).map((hl, idx) => (
+                      <div key={idx}>
+                        <span>{idx < 9 ? `0${idx + 1}` : idx + 1}</span>
+                        <strong>{hl}</strong>
+                        <i className="bi bi-check2"></i>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
