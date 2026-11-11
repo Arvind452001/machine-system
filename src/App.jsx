@@ -20,6 +20,7 @@ import EnquiryDetails from "./pages/EnquiryDetails";
 import LogIn from "./pages/LogIn";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
+import Reviews from "./pages/Reviews";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 import RepresentativeLayout from "./layouts/RepresentativeLayout";
@@ -61,6 +62,8 @@ function LegacyHtmlRedirect() {
     enquiry: "/enquiry",
     about: "/about",
     "how-it-works": "/how-it-works",
+    reviews: "/reviews",
+    "customer-stories": "/reviews",
     login: "/login",
     signup: "/signup",
     "customer-dashboard": "/customer/dashboard",
@@ -150,6 +153,8 @@ function App() {
           <Route path="/enquiry" element={<Enquiry />} />
           <Route path="/about" element={<About />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/customer-stories" element={<Navigate to="/reviews" replace />} />
 
           {/* Auth Pages (Guest only: redirects logged in users to their dashboard) */}
           <Route

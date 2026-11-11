@@ -5,6 +5,7 @@ import { reviewsApi } from "../api/reviewsApi";
 import { faqsApi } from "../api/faqsApi";
 import { BASE_URL } from "../api/axiosInstance";
 import { showSuccessAlert, showErrorAlert } from "../utils/alert";
+import { useAuth } from "../context/AuthContext";
 
 const getInitials = (name) => {
   if (!name || typeof name !== "string") return "MS";
@@ -44,6 +45,7 @@ const resolveImageUrl = (img) => {
 };
 
 const Home = () => {
+  const { user, isAuthenticated } = useAuth();
   const [machines, setMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(true);
 
@@ -62,6 +64,19 @@ const Home = () => {
     comment: "",
     machinePurchased: "",
   });
+
+  // Prefill review form with logged-in user profile info
+  useEffect(() => {
+    if (user && showReviewModal) {
+      setReviewForm((prev) => ({
+        ...prev,
+        authorName: prev.authorName || user.name || "",
+        company: prev.company || user.company || "",
+        authorTitle: prev.authorTitle || user.title || user.designation || "Engineering Lead",
+        country: prev.country || user.country || "United States",
+      }));
+    }
+  }, [user, showReviewModal]);
 
   // FAQs state (GET /api/v1/faqs)
   const [faqs, setFaqs] = useState([]);
@@ -544,14 +559,43 @@ const Home = () => {
             </h2>
           </div>
           <p>Verified field feedback from machine operators and engineering leads.</p>
-          <button
-            type="button"
-            className="button button-dark"
-            style={{ marginTop: "14px", fontSize: "11px", padding: "7px 14px", width: "fit-content", cursor: "pointer" }}
-            onClick={() => setShowReviewModal(true)}
-          >
-            <i className="bi bi-pencil-square"></i> Share your review
-          </button>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              className="button button-dark"
+              style={{
+                marginTop: "14px",
+                fontSize: "11px",
+                padding: "7px 14px",
+                width: "fit-content",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              onClick={() => setShowReviewModal(true)}
+            >
+              <i className="bi bi-pencil-square"></i> Share your review
+            </button>
+          ) : (
+            <Link
+              to="/reviews"
+              className="button button-dark"
+              style={{
+                marginTop: "14px",
+                fontSize: "11px",
+                padding: "7px 14px",
+                width: "fit-content",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                textDecoration: "none",
+              }}
+            >
+              <i className="bi bi-chat-square-quote"></i> View all reviews {reviews.length > 0 ? `(${reviews.length})` : ""}
+            </Link>
+          )}
         </div>
         <div className="carousel slide testimonial-carousel" id="customerStories" data-carousel data-carousel-interval="7000">
           <div className="carousel-inner testimonial-pages" data-carousel-track>
