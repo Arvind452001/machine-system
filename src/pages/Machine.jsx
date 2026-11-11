@@ -489,11 +489,11 @@ const Machine = () => {
                               <i className="bi bi-arrow-right"></i>
                             </Link>
                           </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "8px" }}>
                             <button
                               type="button"
                               className="button button-lime"
-                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center", cursor: "pointer", border: "none" }}
+                              style={{ padding: "6px 8px", fontSize: "11px", justifyContent: "center", cursor: "pointer", border: "none", borderRadius: "3px" }}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -513,7 +513,7 @@ const Machine = () => {
                             <Link
                               className="button button-dark"
                               to={detailUrl}
-                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center" }}
+                              style={{ padding: "6px 8px", fontSize: "11px", justifyContent: "center", borderRadius: "3px" }}
                             >
                               Details <i className="bi bi-arrow-up-right"></i>
                             </Link>

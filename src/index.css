@@ -1573,8 +1573,8 @@ body :not(h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, i) {
 
 .catalog-layout .machine-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: clamp(18px, 2.1vw, 32px);
-  row-gap: 52px;
+  column-gap: clamp(16px, 1.8vw, 24px);
+  row-gap: 32px;
 }
 
 .catalog-layout .machine-card-extended {
@@ -1588,8 +1588,8 @@ body :not(h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, i) {
 }
 
 .catalog-layout .machine-image {
-  height: clamp(245px, 23vw, 340px);
-  border-radius: 3px;
+  height: clamp(165px, 15vw, 205px);
+  border-radius: 4px;
   background: #f1efed;
 }
 
@@ -1602,18 +1602,18 @@ body :not(h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, i) {
 }
 
 .catalog-layout .machine-category {
-  top: 14px;
-  left: 14px;
-  padding: 7px 10px;
+  top: 12px;
+  left: 12px;
+  padding: 5px 8px;
   border-radius: 2px;
   background: #ffffffed;
   color: #39322e;
-  font-size: 11px !important;
+  font-size: 10px !important;
   letter-spacing: .06em;
 }
 
 .catalog-layout .machine-card-body {
-  padding: 17px 1px 0;
+  padding: 12px 1px 0;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -1621,33 +1621,38 @@ body :not(h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, i) {
 
 .catalog-layout .machine-meta {
   color: #817870;
-  font-size: 11px !important;
+  font-size: 10px !important;
   letter-spacing: .08em;
 }
 
 .catalog-layout .machine-card h3 {
-  margin: 10px 0 6px;
-  font-size: 19px;
+  margin: 6px 0 4px;
+  font-size: 17px;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .catalog-layout .machine-card p {
-  min-height: 50px;
+  min-height: 34px;
   color: #6f6862;
-  font-size: 14px !important;
-  line-height: 1.65;
+  font-size: 13px !important;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .catalog-layout .machine-card-bottom {
   margin-top: auto;
-  padding-top: 13px;
+  padding-top: 10px;
   color: #786f68;
-  font-size: 11px !important;
+  font-size: 10px !important;
 }
 
 .catalog-layout .machine-card-bottom strong {
   color: #26211e;
-  font-size: 15px !important;
+  font-size: 14px !important;
 }
 
 .catalog-layout .machine-open {
