@@ -47,6 +47,31 @@ const Machine = () => {
     parseInt(searchParams.get("limit") || "6", 10) || 6
   );
 
+  const priceParam = searchParams.get("maxPrice")
+    ? Number(searchParams.get("maxPrice"))
+    : 250000;
+  const [maxPrice, setMaxPrice] = useState(priceParam);
+
+  // Sync state if URL changes externally
+  useEffect(() => {
+    const p = searchParams.get("maxPrice")
+      ? Number(searchParams.get("maxPrice"))
+      : 250000;
+    setMaxPrice(p);
+  }, [searchParams]);
+
+  const handlePriceChange = (val) => {
+    setMaxPrice(val);
+    const newParams = new URLSearchParams(searchParams);
+    if (val >= 250000) {
+      newParams.delete("maxPrice");
+    } else {
+      newParams.set("maxPrice", String(val));
+    }
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
+
   // Component state
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -207,7 +232,8 @@ const Machine = () => {
   };
 
   const handleClearAll = (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
+    setMaxPrice(250000);
     const newParams = new URLSearchParams();
     newParams.set("category", "all");
     newParams.set("page", "1");
@@ -215,10 +241,17 @@ const Machine = () => {
     setSearchParams(newParams);
   };
 
-  const displayedMachines = machines;
+  const displayedMachines = machines.filter((m) => {
+    if (maxPrice >= 250000) return true;
+    return m.basePrice ? Number(m.basePrice) <= maxPrice : true;
+  });
 
   const totalCount =
-    pagination.total !== undefined ? pagination.total : machines.length;
+    maxPrice < 250000
+      ? displayedMachines.length
+      : pagination.total !== undefined
+      ? pagination.total
+      : machines.length;
   const countLabel = `${String(totalCount).padStart(2, "0")} SYSTEMS`;
   const isAllCategory =
     !categoryParam || categoryParam.toLowerCase() === "all";
@@ -347,65 +380,79 @@ const Machine = () => {
               )}
             </fieldset>
 
-            {/* Starting Price Guide */}
-            <fieldset className="catalog-filter-group price-filter-group">
-              <legend>
-                Starting price
-                <small>USD</small>
-              </legend>
-              <div className="price-range-ends">
-                <span>$0</span>
-                <span>$150,000+</span>
+            {/* Starting Price Filter (Interactive Range Slider) */}
+            <div className="catalog-filter-group price-filter-group" style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <legend style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#111827", margin: 0, padding: 0 }}>
+                  Starting price <small style={{ color: "#9ca3af", fontWeight: 400 }}>USD</small>
+                </legend>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: maxPrice < 250000 ? "#c0392b" : "#4b5563",
+                    background: maxPrice < 250000 ? "#fef2f2" : "#f3f4f6",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    border: maxPrice < 250000 ? "1px solid #fecaca" : "1px solid #e5e7eb",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {maxPrice >= 250000 ? "Any Price" : `Up to $${maxPrice.toLocaleString()}`}
+                </span>
               </div>
-              <div className="price-range-control">
-                <span className="price-range-track" aria-hidden="true"></span>
-                <label className="price-choice">
-                  <input
-                    type="radio"
-                    name="machine-price-guide"
-                    id="price-opt-all"
-                    defaultChecked
-                  />
-                  <span className="price-dot"></span>
-                  <span className="price-choice-label">Any</span>
-                </label>
-                <label className="price-choice">
-                  <input
-                    type="radio"
-                    name="machine-price-guide"
-                    id="price-opt-under-75"
-                  />
-                  <span className="price-dot"></span>
-                  <span className="price-choice-label">
-                    Under
-                    <br />
-                    $75k
-                  </span>
-                </label>
-                <label className="price-choice">
-                  <input
-                    type="radio"
-                    name="machine-price-guide"
-                    id="price-opt-75-125"
-                  />
-                  <span className="price-dot"></span>
-                  <span className="price-choice-label">
-                    $75k–
-                    <br />
-                    $125k
-                  </span>
-                </label>
-                <label className="price-choice">
-                  <input
-                    type="radio"
-                    name="machine-price-guide"
-                    id="price-opt-over-125"
-                  />
-                  <span className="price-dot"></span>
-                  <span className="price-choice-label">$125k+</span>
-                </label>
+
+              <div style={{ position: "relative", padding: "4px 0" }}>
+                <input
+                  type="range"
+                  min={15000}
+                  max={250000}
+                  step={5000}
+                  value={maxPrice}
+                  onChange={(e) => handlePriceChange(Number(e.target.value))}
+                  className="professional-price-slider"
+                  aria-label="Filter machines by maximum starting price"
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "2px", fontSize: "10px", color: "#9ca3af", fontWeight: 500 }}>
+                  <span>$15k</span>
+                  <span>$75k</span>
+                  <span>$150k</span>
+                  <span>$250k+</span>
+                </div>
               </div>
-            </fieldset>
+
+              {/* Quick Preset Filter Pills */}
+              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginTop: "12px" }}>
+                {[
+                  { label: "All", val: 250000 },
+                  { label: "< $50k", val: 50000 },
+                  { label: "< $100k", val: 100000 },
+                  { label: "< $200k", val: 200000 },
+                ].map((preset) => {
+                  const isSelected = maxPrice === preset.val;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handlePriceChange(preset.val)}
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        padding: "4px 8px",
+                        borderRadius: "3px",
+                        border: isSelected ? "1px solid #c0392b" : "1px solid #e5e7eb",
+                        background: isSelected ? "#c0392b" : "#ffffff",
+                        color: isSelected ? "#ffffff" : "#4b5563",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <p className="catalog-filter-note">
               <i className="bi bi-info-circle"></i> Prices are indicative
@@ -526,22 +573,22 @@ const Machine = () => {
               ) : (
                 /* Empty state when no machines found */
                 <div className="no-machines-found">
-                  <i className="bi bi-cpu"></i>
-                  <h3>No machines found</h3>
+                  <i className="bi bi-funnel"></i>
+                  <h3>No machines match criteria</h3>
                   <p>
-                    {isAllCategory
-                      ? "There are currently no machines listed in the catalogue."
-                      : `No machines match the selected category "${categoryParam}".`}
+                    {maxPrice < 250000
+                      ? `No machines found with starting price under $${maxPrice.toLocaleString()}.`
+                      : !isAllCategory
+                      ? `No machines match the selected category "${categoryParam}".`
+                      : "There are currently no machines listed in the catalogue."}
                   </p>
-                  {!isAllCategory && (
-                    <button
-                      type="button"
-                      className="button button-dark"
-                      onClick={() => handleCategoryChange("all")}
-                    >
-                      View all machines
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="button button-dark"
+                    onClick={handleClearAll}
+                  >
+                    Reset all filters
+                  </button>
                 </div>
               )}
 
