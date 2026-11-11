@@ -1,6 +1,184 @@
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { contentApi } from "../api/contentApi";
+
+/**
+ * Helper to derive anchor IDs matching standard terms anchors
+ */
+const getSectionId = (title) => {
+  const lower = title.toLowerCase();
+  if (lower.includes("acceptance") || lower.includes("permitted")) return "acceptance";
+  if (lower.includes("product") || lower.includes("information")) return "information";
+  if (lower.includes("enquir") || lower.includes("quotes") || lower.includes("configuration")) return "quotes";
+  if (lower.includes("account")) return "accounts";
+  if (lower.includes("intellectual") || lower.includes("property")) return "ip";
+  if (lower.includes("third-party") || lower.includes("links")) return "third-party";
+  if (lower.includes("availability")) return "availability";
+  if (lower.includes("liability")) return "liability";
+  if (lower.includes("change")) return "changes";
+  if (lower.includes("contact")) return "contact";
+
+  // Fallback slugification
+  return lower
+    .replace(/^\d+[\.\s]*/, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
+
+/**
+ * Helper to format navigation label from section heading (e.g. "1. Acceptance and permitted use" -> "Acceptance and permitted use")
+ */
+const getNavLabel = (title) => {
+  return title.replace(/^\d+[\.\s]*/, "").trim();
+};
+
+/**
+ * Helper to parse markdown-like body into structured sections
+ */
+const parseContentBody = (rawBody = "") => {
+  const lines = rawBody.split("\n");
+  let lastUpdated = "";
+  const sections = [];
+  let currentSection = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Check for "Last updated: ..."
+    if (/^last updated:/i.test(line)) {
+      lastUpdated = line.replace(/^last updated:\s*/i, "").trim();
+      continue;
+    }
+
+    // Check for heading (### or ##)
+    if (/^#{1,3}\s+/.test(line)) {
+      const headingText = line.replace(/^#{1,3}\s+/, "").trim();
+      if (currentSection) {
+        sections.push(currentSection);
+      }
+      currentSection = {
+        title: headingText,
+        id: getSectionId(headingText),
+        navLabel: getNavLabel(headingText),
+        paragraphs: [],
+      };
+      continue;
+    }
+
+    // Accumulate paragraph text into current section
+    if (currentSection) {
+      currentSection.paragraphs.push(line);
+    }
+  }
+
+  if (currentSection) {
+    sections.push(currentSection);
+  }
+
+  return { lastUpdated, sections };
+};
+
+/**
+ * Render paragraph text, converting [Text](url) markdown links into React Router Link or <a>
+ */
+const renderParagraphWithLinks = (text) => {
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    const label = match[1];
+    const url = match[2];
+
+    if (url.startsWith("/")) {
+      parts.push(
+        <Link key={match.index} to={url}>
+          {label}
+        </Link>
+      );
+    } else {
+      parts.push(
+        <a key={match.index} href={url} target="_blank" rel="noreferrer">
+          {label}
+        </a>
+      );
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
 
 const Terms = () => {
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [contentData, setContentData] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    contentApi
+      .getContentBySlug("terms")
+      .then((res) => {
+        if (!isMounted) return;
+        if (res?.success && res?.data) {
+          setContentData(res.data);
+        } else if (res?.data) {
+          setContentData(res.data);
+        } else {
+          setContentData(res);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load terms:", err);
+        if (isMounted) setError("Unable to load the terms of service right now.");
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Handle anchor scrolling once content is loaded or on hash change
+  useEffect(() => {
+    if (!loading && location.hash) {
+      const targetId = location.hash.replace("#", "");
+      const timer = setTimeout(() => {
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, location.hash]);
+
+  const parsed = parseContentBody(contentData?.body || "");
+  const formattedDate =
+    parsed.lastUpdated ||
+    (contentData?.publishedAt
+      ? new Date(contentData.publishedAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "October 21, 2026");
+
   return (
     <main>
       <div className="page-crumb">
@@ -8,7 +186,7 @@ const Terms = () => {
           <i className="bi bi-arrow-left"></i> Home
         </Link>
         <span>/</span>
-        <span>Terms &amp; Conditions</span>
+        <span>{contentData?.title || "Terms & Conditions"}</span>
       </div>
 
       <section className="info-hero">
@@ -35,115 +213,55 @@ const Terms = () => {
       </section>
 
       <section className="info-content legal-layout">
-        <nav className="legal-nav" aria-label="Terms and conditions sections">
-          <strong>ON THIS PAGE</strong>
-          <a href="#acceptance">Acceptance and use</a>
-          <a href="#information">Product information</a>
-          <a href="#quotes">Enquiries and quotes</a>
-          <a href="#accounts">Accounts</a>
-          <a href="#ip">Intellectual property</a>
-          <a href="#liability">Liability</a>
-          <a href="#contact">Contact</a>
-        </nav>
-        <div className="legal-copy">
-          <p className="legal-updated">Last updated: October 21, 2026</p>
-          <section id="acceptance">
-            <h2>1. Acceptance and permitted use</h2>
-            <p>
-              By accessing or using this website, you agree to these terms. If you
-              do not agree, please do not use the site. You may use the website
-              for lawful business purposes and must not interfere with its
-              operation, attempt unauthorized access, or misuse its content or
-              services.
-            </p>
-          </section>
-          <section id="information">
-            <h2>2. Product and website information</h2>
-            <p>
-              Product descriptions, images, specifications, configuration
-              previews, and indicative pricing are provided for general
-              information and may change without notice. They are not a binding
-              offer or a guarantee of availability, suitability, or final
-              specification. Confirm important requirements with a MACHINE
-              Systems representative before making a purchasing decision.
-            </p>
-          </section>
-          <section id="quotes">
-            <h2>3. Enquiries, configurations, and quotes</h2>
-            <p>
-              Submitting an enquiry or saving a configuration does not place an
-              order or guarantee a price, delivery date, or product allocation.
-              Any quote, order, sale, warranty, or delivery will be subject to
-              the separate terms provided with the applicable transaction and
-              confirmed by an authorized representative.
-            </p>
-          </section>
-          <section id="accounts">
-            <h2>4. Accounts and information you provide</h2>
-            <p>
-              You are responsible for maintaining the confidentiality of your
-              account credentials and for activity under your account. Please
-              provide information that is accurate and up to date, and notify us
-              if you believe your account has been used without authorization.
-              Our handling of personal information is described in our{" "}
-              <Link to="/privacy">Privacy Policy</Link>.
-            </p>
-          </section>
-          <section id="ip">
-            <h2>5. Intellectual property</h2>
-            <p>
-              Unless otherwise stated, website text, design, graphics, and other
-              materials are owned by or used with permission by MACHINE Systems
-              and are protected by applicable intellectual property laws. You may
-              view and use the site for its intended purpose; other copying,
-              distribution, or commercial use requires prior permission.
-            </p>
-          </section>
-          <section id="third-party">
-            <h2>6. Third-party services and links</h2>
-            <p>
-              Links to third-party websites or services are provided for
-              convenience. MACHINE Systems does not control and is not
-              responsible for their content, availability, or practices. Your
-              use of third-party services is subject to their own terms.
-            </p>
-          </section>
-          <section id="availability">
-            <h2>7. Availability and changes</h2>
-            <p>
-              We may update, suspend, or discontinue website features or
-              content at any time. We aim to keep the site available and accurate
-              but do not guarantee uninterrupted access or that all information
-              will always be error-free.
-            </p>
-          </section>
-          <section id="liability">
-            <h2>8. Limitation of liability</h2>
-            <p>
-              To the extent permitted by applicable law, MACHINE Systems is not
-              liable for indirect or consequential losses arising from use of, or
-              inability to use, this website. Nothing in these terms excludes
-              liability that cannot lawfully be excluded. These terms do not
-              replace any rights or remedies that apply to a confirmed purchase
-              under its separate agreement.
-            </p>
-          </section>
-          <section id="changes">
-            <h2>9. Changes to these terms</h2>
-            <p>
-              We may revise these terms by publishing an updated version on this
-              page. The date above indicates the latest revision. Please review
-              the terms periodically.
-            </p>
-          </section>
-          <section id="contact">
-            <h2>10. Contact</h2>
-            <p>
-              If you have questions about these terms, please contact us
-              through the <Link to="/contact">Contact Us page</Link>.
-            </p>
-          </section>
-        </div>
+        {loading ? (
+          <div style={{ padding: "4rem 2rem", textAlign: "center", width: "100%" }}>
+            <div className="spinner-border text-danger" role="status" style={{ width: "3rem", height: "3rem" }}>
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p style={{ marginTop: "1rem", color: "#666" }}>Loading Terms &amp; Conditions...</p>
+          </div>
+        ) : error ? (
+          <div style={{ padding: "3rem 1rem", textAlign: "center", width: "100%" }}>
+            <p style={{ color: "#d9534f", fontSize: "1.1rem" }}>{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn btn-outline-dark"
+              style={{ marginTop: "1rem" }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <nav className="legal-nav" aria-label="Terms and conditions sections">
+              <strong>ON THIS PAGE</strong>
+              {parsed.sections.map((section) => (
+                <a key={section.id} href={`#${section.id}`}>
+                  {section.navLabel}
+                </a>
+              ))}
+            </nav>
+
+            <div className="legal-copy">
+              <p className="legal-updated">Last updated: {formattedDate}</p>
+
+              {parsed.sections.length > 0 ? (
+                parsed.sections.map((section) => (
+                  <section key={section.id} id={section.id}>
+                    <h2>{section.title}</h2>
+                    {section.paragraphs.map((p, idx) => (
+                      <p key={idx}>{renderParagraphWithLinks(p)}</p>
+                    ))}
+                  </section>
+                ))
+              ) : (
+                <div style={{ whiteSpace: "pre-wrap" }}>
+                  {contentData?.body}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </section>
     </main>
   );

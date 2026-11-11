@@ -11,5 +11,6 @@ export { default as categoriesApi } from "./categoriesApi";
 export { default as reviewsApi } from "./reviewsApi";
 export { default as faqsApi } from "./faqsApi";
 export { default as savedMachinesApi } from "./savedMachinesApi";
+export { default as contentApi } from "./contentApi";
 export { default as apiClient, apiClient as defaultClient } from "./client";
 

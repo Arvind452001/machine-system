@@ -10,6 +10,7 @@ import { reviewsApi } from "./reviewsApi";
 import { faqsApi } from "./faqsApi";
 import { axiosInstance, getAuthToken, STORAGE_KEY } from "./axiosInstance";
 import { contactApi } from "./contactApi";
+import { contentApi } from "./contentApi";
 
 export const apiClient = {
   // Auth
@@ -82,6 +83,10 @@ export const apiClient = {
 
   // FAQs
   getFaqs: (params = {}) => faqsApi.getFaqs(params),
+
+  // Legal / Content Pages
+  getContent: (slug) => contentApi.getContentBySlug(slug),
+  getAllContent: () => contentApi.getAllContent(),
 };
 
 export {
@@ -96,6 +101,7 @@ export {
   reviewsApi,
   faqsApi,
   contactApi,
+  contentApi,
   axiosInstance,
   getAuthToken,
   STORAGE_KEY,

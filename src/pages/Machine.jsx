@@ -447,220 +447,53 @@ const Machine = () => {
                     return (
                       <article
                         key={m._id || m.slug}
-                        className="machine-card machine-card-pro"
+                        className="machine-card machine-card-extended"
                         data-category={m.category}
-                        style={{
-                          background: "#ffffff",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "12px",
-                          overflow: "hidden",
-                          display: "flex",
-                          flexDirection: "column",
-                          transition: "all 0.25s ease",
-                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.04)",
-                        }}
                       >
-                        {/* Image Container with floating badge */}
-                        <Link
-                          to={detailUrl}
-                          style={{
-                            height: "220px",
-                            display: "block",
-                            position: "relative",
-                            overflow: "hidden",
-                            background: "#0f172a",
-                          }}
-                        >
+                        <Link className="machine-image" to={detailUrl}>
                           <img
                             src={img}
                             alt={m.name || "Machine platform"}
                             loading="lazy"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              transition: "transform 0.35s ease",
-                            }}
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src =
-                                "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80";
+                                "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1200&fmt=webp";
                             }}
                           />
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "12px",
-                              left: "12px",
-                              background: "rgba(15, 23, 42, 0.88)",
-                              backdropFilter: "blur(8px)",
-                              color: "#ffffff",
-                              fontSize: "10px",
-                              fontWeight: 700,
-                              letterSpacing: "0.6px",
-                              padding: "4px 9px",
-                              borderRadius: "6px",
-                              border: "1px solid rgba(255, 255, 255, 0.15)",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            {m.sku || m.slug?.toUpperCase()} · {(m.category || "INDUSTRIAL").toUpperCase()}
-                          </div>
-
-                          <span
-                            style={{
-                              position: "absolute",
-                              right: "12px",
-                              bottom: "12px",
-                              width: "32px",
-                              height: "32px",
-                              borderRadius: "50%",
-                              background: "rgba(255, 255, 255, 0.9)",
-                              color: "#0f172a",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                            }}
-                          >
+                          <span className="machine-category">{tag}</span>
+                          <span className="image-arrow">
                             <i className="bi bi-arrow-up-right"></i>
                           </span>
                         </Link>
-
-                        {/* Card Body */}
-                        <div
-                          style={{
-                            padding: "18px 20px 16px",
-                            display: "flex",
-                            flexDirection: "column",
-                            flex: 1,
-                          }}
-                        >
-                          <h3
-                            style={{
-                              margin: "0 0 6px",
-                              fontSize: "16px",
-                              fontWeight: 700,
-                              color: "#0f172a",
-                              lineHeight: "1.35",
-                            }}
-                          >
-                            <Link to={detailUrl} style={{ color: "inherit", textDecoration: "none" }}>
-                              {m.name}
-                            </Link>
-                          </h3>
-
-                          <p
-                            style={{
-                              fontSize: "12.5px",
-                              color: "#64748b",
-                              lineHeight: "1.5",
-                              margin: "0 0 16px",
-                              minHeight: "38px",
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                            }}
-                          >
-                            {m.summary || m.description || "Production-ready industrial platform with modular options."}
+                        <div className="machine-card-body">
+                          <div className="machine-meta">
+                            <span>{m.sku || m.slug?.toUpperCase()}</span>
+                            <span>
+                              {(m.category || "INDUSTRIAL").toUpperCase()}
+                            </span>
+                          </div>
+                          <h3>{m.name}</h3>
+                          <p>
+                            {m.summary ||
+                              (m.description
+                                ? `${m.description.slice(0, 80)}...`
+                                : "Precision industrial production system.")}
                           </p>
-
-                          {/* Pricing Row */}
-                          <div
-                            style={{
-                              borderTop: "1px solid #f1f5f9",
-                              paddingTop: "12px",
-                              marginTop: "auto",
-                              display: "flex",
-                              alignItems: "baseline",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <div>
-                              <span
-                                style={{
-                                  display: "block",
-                                  fontSize: "10px",
-                                  fontWeight: 700,
-                                  color: "#94a3b8",
-                                  letterSpacing: "0.6px",
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                Starting From
-                              </span>
-                              <strong
-                                style={{
-                                  fontSize: "19px",
-                                  fontWeight: 800,
-                                  color: "#0f172a",
-                                  letterSpacing: "-0.5px",
-                                }}
-                              >
-                                {price}
-                              </strong>
-                            </div>
-
-                            <Link
-                              to={detailUrl}
-                              style={{
-                                fontSize: "12px",
-                                color: "#0369a1",
-                                fontWeight: 600,
-                                textDecoration: "none",
-                              }}
-                            >
-                              Specs &amp; Info <i className="bi bi-chevron-right ms-1"></i>
+                          <div className="machine-card-bottom">
+                            <span>
+                              STARTING FROM
+                              <strong>{price}</strong>
+                            </span>
+                            <Link to={detailUrl} aria-label={`View ${m.name}`}>
+                              <i className="bi bi-arrow-right"></i>
                             </Link>
                           </div>
-
-                          {/* Action Buttons: Configure & Add to Basket */}
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: "8px",
-                              marginTop: "14px",
-                            }}
-                          >
-                            <Link
-                              to={`/configure?machine=${m.slug || m._id}`}
-                              className="btn btn-sm"
-                              style={{
-                                background: "#173f35",
-                                color: "#ffffff",
-                                padding: "8px 10px",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                borderRadius: "6px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                textDecoration: "none",
-                              }}
-                            >
-                              <i className="bi bi-sliders"></i> Configure
-                            </Link>
-
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
                             <button
                               type="button"
-                              className="btn btn-sm"
-                              style={{
-                                background: "#f8fafc",
-                                color: "#1e293b",
-                                border: "1px solid #cbd5e1",
-                                padding: "8px 10px",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                borderRadius: "6px",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                cursor: "pointer",
-                              }}
+                              className="button button-lime"
+                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center", cursor: "pointer", border: "none" }}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -675,8 +508,15 @@ const Machine = () => {
                                 }
                               }}
                             >
-                              <i className="bi bi-bag-plus"></i> Basket
+                              <i className="bi bi-bag-plus"></i> Add to Basket
                             </button>
+                            <Link
+                              className="button button-dark"
+                              to={detailUrl}
+                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center" }}
+                            >
+                              Details <i className="bi bi-arrow-up-right"></i>
+                            </Link>
                           </div>
                         </div>
                       </article>
