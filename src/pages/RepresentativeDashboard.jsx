@@ -29,7 +29,7 @@ const RepresentativeDashboard = () => {
     needsFirstContactCount: "00",
     quotesInProgressCount: "00",
     quotesSentCount: "00",
-    winRate: "56%",
+    winRate: "0%",
   });
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ const RepresentativeDashboard = () => {
             needsFirstContactCount: String(m.pendingQuotes ?? 0).padStart(2, "0"),
             quotesInProgressCount: String(m.pendingQuotes ?? 0).padStart(2, "0"),
             quotesSentCount: String(m.acceptedQuotes ?? 0).padStart(2, "0"),
-            winRate: `${m.winRate || 56}%`,
+            winRate: `${m.winRate ?? 0}%`,
           });
         }
       })

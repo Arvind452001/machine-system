@@ -27,7 +27,7 @@ const Enquiry = () => {
     searchParams.get("machine") ||
     locationState.machineName ||
     savedConfig?.machineName ||
-    "Axis 400 · Precision CNC lathe";
+    "";
   const queryPrice =
     Number(searchParams.get("price")) ||
     Number(locationState.calculatedTotal) ||
@@ -37,7 +37,7 @@ const Enquiry = () => {
     searchParams.get("sku") ||
     locationState.machineCode ||
     savedConfig?.machineCode ||
-    "AX-400";
+    "";
   const initialMachineId =
     searchParams.get("machineId") ||
     searchParams.get("id") ||

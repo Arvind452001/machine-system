@@ -61,7 +61,7 @@ const CustomerWorkspace = () => {
             ...prev,
             openEnquiries: statData.activeEnquiries ?? prev.openEnquiries,
             quotesReady: statData.totalQuotes ?? prev.quotesReady,
-            acceptedOrders: statData.acceptedOrders ?? 5,
+            acceptedOrders: statData.acceptedOrders ?? 0,
             machinePlatforms: prev.machinePlatforms,
           }));
         }
