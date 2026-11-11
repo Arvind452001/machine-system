@@ -252,28 +252,28 @@ const MyMachines = () => {
                           "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
                       }}
                     />
-                    
+
                     {/* Top-Left Category / SKU Tag */}
                     <span
                       style={{
                         position: "absolute",
-                        top: "10px",
-                        left: "10px",
+                        top: "8px",
+                        left: "8px",
                         background: "rgba(17, 24, 39, 0.78)",
                         color: "#ffffff",
                         backdropFilter: "blur(4px)",
-                        fontSize: "10px",
+                        fontSize: "9px",
                         fontWeight: 600,
                         letterSpacing: "0.06em",
-                        padding: "3px 8px",
-                        borderRadius: "4px",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
                         zIndex: 2,
                       }}
                     >
                       {tag}
                     </span>
 
-                    {/* Top-Right Refined Trash Button */}
+                    {/* Top-Right Small Trash Button */}
                     <button
                       type="button"
                       onClick={(e) =>
@@ -282,15 +282,15 @@ const MyMachines = () => {
                       title="Delete saved configuration"
                       style={{
                         position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        background: "rgba(255, 255, 255, 0.92)",
+                        top: "8px",
+                        right: "8px",
+                        background: "rgba(255, 255, 255, 0.9)",
                         backdropFilter: "blur(4px)",
                         color: "#6b7280",
                         border: "1px solid rgba(0, 0, 0, 0.08)",
-                        borderRadius: "6px",
-                        width: "30px",
-                        height: "30px",
+                        borderRadius: "4px",
+                        width: "24px",
+                        height: "24px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -304,25 +304,25 @@ const MyMachines = () => {
                         e.currentTarget.style.borderColor = "#fecaca";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.92)";
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)";
                         e.currentTarget.style.color = "#6b7280";
                         e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)";
                       }}
                     >
-                      <i className="bi bi-trash" style={{ fontSize: "13px" }}></i>
+                      <i className="bi bi-trash" style={{ fontSize: "11px" }}></i>
                     </button>
                   </div>
 
                   <div className="my-machine-copy">
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
                       <span
                         style={{
                           display: "inline-block",
-                          fontSize: "10px",
+                          fontSize: "9px",
                           fontWeight: 700,
                           letterSpacing: "0.04em",
-                          padding: "2px 7px",
-                          borderRadius: "4px",
+                          padding: "1px 6px",
+                          borderRadius: "3px",
                           background: optionsCount > 0 ? "#ecfdf5" : "#f3f4f6",
                           color: optionsCount > 0 ? "#065f46" : "#4b5563",
                           border: optionsCount > 0 ? "1px solid #a7f3d0" : "1px solid #e5e7eb",
@@ -330,7 +330,7 @@ const MyMachines = () => {
                       >
                         {optionsCount > 0
                           ? `${optionsCount} CUSTOM OPTION${optionsCount > 1 ? "S" : ""}`
-                          : "STANDARD BUILD"}
+                          : "FACTORY DEFAULT"}
                       </span>
                     </div>
 
@@ -344,21 +344,21 @@ const MyMachines = () => {
                     <div
                       style={{
                         marginTop: "auto",
-                        paddingTop: "10px",
+                        paddingTop: "8px",
                         borderTop: "1px solid #f0f2f0",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+                        <span style={{ fontSize: "9px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                           Configured Price
                         </span>
-                        <strong style={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+                        <strong style={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>
                           {price}
                         </strong>
                       </div>
 
-                      {/* Side-by-Side Professional Action Buttons */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: "8px" }}>
+                      {/* Small, compact side-by-side action buttons */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "6px" }}>
                         <button
                           type="button"
                           onClick={(e) => handleAddSavedToBasket(e, s)}
@@ -366,21 +366,22 @@ const MyMachines = () => {
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "6px",
-                            padding: "8px 10px",
+                            gap: "4px",
+                            padding: "4px 8px",
                             background: "#c0392b",
                             color: "#ffffff",
                             border: "none",
-                            borderRadius: "4px",
+                            borderRadius: "3px",
                             fontSize: "11px",
                             fontWeight: 600,
                             cursor: "pointer",
+                            height: "28px",
                             transition: "background 0.15s ease",
                           }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#a93226")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "#c0392b")}
                         >
-                          <i className="bi bi-bag-plus"></i> Add to Basket
+                          <i className="bi bi-bag-plus"></i> Basket
                         </button>
 
                         <Link
@@ -389,15 +390,16 @@ const MyMachines = () => {
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "5px",
-                            padding: "8px 10px",
+                            gap: "4px",
+                            padding: "4px 8px",
                             background: "#111827",
                             color: "#ffffff",
                             border: "none",
-                            borderRadius: "4px",
+                            borderRadius: "3px",
                             fontSize: "11px",
                             fontWeight: 600,
                             textDecoration: "none",
+                            height: "28px",
                             transition: "background 0.15s ease",
                           }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#273142")}
@@ -484,16 +486,16 @@ const MyMachines = () => {
                     <span
                       style={{
                         position: "absolute",
-                        top: "10px",
-                        left: "10px",
+                        top: "8px",
+                        left: "8px",
                         background: "rgba(17, 24, 39, 0.78)",
                         color: "#ffffff",
                         backdropFilter: "blur(4px)",
-                        fontSize: "10px",
+                        fontSize: "9px",
                         fontWeight: 600,
                         letterSpacing: "0.06em",
-                        padding: "3px 8px",
-                        borderRadius: "4px",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
                         zIndex: 2,
                       }}
                     >
@@ -503,15 +505,15 @@ const MyMachines = () => {
                       to={`/machine-details?id=${m.slug || m._id}`}
                       style={{
                         position: "absolute",
-                        top: "10px",
-                        right: "10px",
+                        top: "8px",
+                        right: "8px",
                         color: "#111827",
                         background: "rgba(255, 255, 255, 0.9)",
                         backdropFilter: "blur(4px)",
                         border: "1px solid rgba(0, 0, 0, 0.08)",
-                        borderRadius: "6px",
-                        width: "30px",
-                        height: "30px",
+                        borderRadius: "4px",
+                        width: "24px",
+                        height: "24px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -528,19 +530,19 @@ const MyMachines = () => {
                         e.currentTarget.style.color = "#111827";
                       }}
                     >
-                      <i className="bi bi-arrow-up-right" style={{ fontSize: "12px" }}></i>
+                      <i className="bi bi-arrow-up-right" style={{ fontSize: "11px" }}></i>
                     </Link>
                   </div>
                   <div className="my-machine-copy">
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
                       <span
                         style={{
                           display: "inline-block",
-                          fontSize: "10px",
+                          fontSize: "9px",
                           fontWeight: 700,
                           letterSpacing: "0.04em",
-                          padding: "2px 7px",
-                          borderRadius: "4px",
+                          padding: "1px 6px",
+                          borderRadius: "3px",
                           background: "#f3f4f6",
                           color: "#4b5563",
                           border: "1px solid #e5e7eb",
@@ -553,8 +555,8 @@ const MyMachines = () => {
                     <h2>{m.name}</h2>
                     <p>
                       {m.description
-                        ? m.description.length > 90
-                          ? `${m.description.slice(0, 90)}...`
+                        ? m.description.length > 80
+                          ? `${m.description.slice(0, 80)}...`
                           : m.description
                         : "Compact, accurate machining platform for flexible production."}
                     </p>
@@ -562,35 +564,37 @@ const MyMachines = () => {
                     <div
                       style={{
                         marginTop: "auto",
-                        paddingTop: "10px",
+                        paddingTop: "8px",
                         borderTop: "1px solid #f0f2f0",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+                        <span style={{ fontSize: "9px", fontWeight: 600, color: "#8a948d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                           Starting From
                         </span>
-                        <strong style={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
+                        <strong style={{ fontSize: "13px", fontWeight: 700, color: "#111827" }}>
                           {price}
                         </strong>
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "8px" }}>
+                      {/* Small, compact side-by-side action buttons */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: "6px" }}>
                         <Link
                           to={`/configure?machine=${m.slug || m._id}`}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "6px",
-                            padding: "8px 10px",
+                            gap: "4px",
+                            padding: "4px 8px",
                             background: "#c0392b",
                             color: "#ffffff",
                             border: "none",
-                            borderRadius: "4px",
+                            borderRadius: "3px",
                             fontSize: "11px",
                             fontWeight: 600,
                             textDecoration: "none",
+                            height: "28px",
                             transition: "background 0.15s ease",
                           }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#a93226")}
@@ -605,15 +609,16 @@ const MyMachines = () => {
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "5px",
-                            padding: "8px 10px",
+                            gap: "4px",
+                            padding: "4px 8px",
                             background: "#111827",
                             color: "#ffffff",
                             border: "none",
-                            borderRadius: "4px",
+                            borderRadius: "3px",
                             fontSize: "11px",
                             fontWeight: 600,
                             textDecoration: "none",
+                            height: "28px",
                             transition: "background 0.15s ease",
                           }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = "#273142")}
