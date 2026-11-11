@@ -226,9 +226,8 @@ const MyMachines = () => {
               const img =
                 baseMachine.images?.[0] ||
                 "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
-              const tag = `${baseMachine.sku || "CUSTOM"} · ${(
-                baseMachine.category || "MACHINE"
-              ).toUpperCase()}`;
+              const skuTag = baseMachine.sku || "CUSTOM BUILD";
+              const categoryTag = (baseMachine.category || "INDUSTRIAL").toUpperCase();
               const price = s.totalPrice
                 ? `$${Number(s.totalPrice).toLocaleString()}`
                 : baseMachine.basePrice
@@ -253,24 +252,31 @@ const MyMachines = () => {
                       }}
                     />
 
-                    {/* Top-Left Category / SKU Tag */}
+                    {/* Crisp Sleek SKU Badge (Frosted Light) */}
                     <span
                       style={{
                         position: "absolute",
                         top: "8px",
                         left: "8px",
-                        background: "rgba(17, 24, 39, 0.78)",
-                        color: "#ffffff",
-                        backdropFilter: "blur(4px)",
+                        background: "rgba(255, 255, 255, 0.94)",
+                        color: "#1f2937",
+                        backdropFilter: "blur(6px)",
                         fontSize: "9px",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
-                        padding: "2px 6px",
-                        borderRadius: "3px",
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        padding: "3px 7px",
+                        borderRadius: "4px",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                        maxWidth: "calc(100% - 44px)",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                         zIndex: 2,
                       }}
+                      title={skuTag}
                     >
-                      {tag}
+                      {skuTag}
                     </span>
 
                     {/* Top-Right Small Trash Button */}
@@ -284,13 +290,14 @@ const MyMachines = () => {
                         position: "absolute",
                         top: "8px",
                         right: "8px",
-                        background: "rgba(255, 255, 255, 0.9)",
-                        backdropFilter: "blur(4px)",
+                        background: "rgba(255, 255, 255, 0.94)",
+                        backdropFilter: "blur(6px)",
                         color: "#6b7280",
-                        border: "1px solid rgba(0, 0, 0, 0.08)",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
                         borderRadius: "4px",
-                        width: "24px",
-                        height: "24px",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                        width: "26px",
+                        height: "26px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -304,9 +311,9 @@ const MyMachines = () => {
                         e.currentTarget.style.borderColor = "#fecaca";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)";
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.94)";
                         e.currentTarget.style.color = "#6b7280";
-                        e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.08)";
+                        e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.1)";
                       }}
                     >
                       <i className="bi bi-trash" style={{ fontSize: "11px" }}></i>
@@ -314,23 +321,27 @@ const MyMachines = () => {
                   </div>
 
                   <div className="my-machine-copy">
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "3px" }}>
+                      <span style={{ fontSize: "9px", color: "#8a948d", fontWeight: 600, letterSpacing: "0.05em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {categoryTag}
+                      </span>
                       <span
                         style={{
                           display: "inline-block",
-                          fontSize: "9px",
+                          fontSize: "8.5px",
                           fontWeight: 700,
                           letterSpacing: "0.04em",
-                          padding: "1px 6px",
+                          padding: "1px 5px",
                           borderRadius: "3px",
                           background: optionsCount > 0 ? "#ecfdf5" : "#f3f4f6",
                           color: optionsCount > 0 ? "#065f46" : "#4b5563",
                           border: optionsCount > 0 ? "1px solid #a7f3d0" : "1px solid #e5e7eb",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {optionsCount > 0
-                          ? `${optionsCount} CUSTOM OPTION${optionsCount > 1 ? "S" : ""}`
-                          : "FACTORY DEFAULT"}
+                          ? `${optionsCount} OPTION${optionsCount > 1 ? "S" : ""}`
+                          : "DEFAULT"}
                       </span>
                     </div>
 
@@ -463,9 +474,8 @@ const MyMachines = () => {
               const img =
                 m.images?.[0] ||
                 "https://assets.haascnc.com/is/image/haascnc/ST-20?wid=1000&fmt=webp";
-              const tag = `${m.sku || m.slug?.toUpperCase() || "MS"} · ${(
-                m.category || "CNC"
-              ).toUpperCase()}`;
+              const skuTag = m.sku || m.slug?.toUpperCase() || "STANDARD";
+              const categoryTag = (m.category || "CNC").toUpperCase();
               const price = m.basePrice
                 ? `$${Number(m.basePrice).toLocaleString()}`
                 : "Contact";
@@ -488,18 +498,25 @@ const MyMachines = () => {
                         position: "absolute",
                         top: "8px",
                         left: "8px",
-                        background: "rgba(17, 24, 39, 0.78)",
-                        color: "#ffffff",
-                        backdropFilter: "blur(4px)",
+                        background: "rgba(255, 255, 255, 0.94)",
+                        color: "#1f2937",
+                        backdropFilter: "blur(6px)",
                         fontSize: "9px",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
-                        padding: "2px 6px",
-                        borderRadius: "3px",
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        padding: "3px 7px",
+                        borderRadius: "4px",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                        maxWidth: "calc(100% - 44px)",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                         zIndex: 2,
                       }}
+                      title={skuTag}
                     >
-                      {tag}
+                      {skuTag}
                     </span>
                     <Link
                       to={`/machine-details?id=${m.slug || m._id}`}
@@ -508,12 +525,13 @@ const MyMachines = () => {
                         top: "8px",
                         right: "8px",
                         color: "#111827",
-                        background: "rgba(255, 255, 255, 0.9)",
-                        backdropFilter: "blur(4px)",
-                        border: "1px solid rgba(0, 0, 0, 0.08)",
+                        background: "rgba(255, 255, 255, 0.94)",
+                        backdropFilter: "blur(6px)",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
                         borderRadius: "4px",
-                        width: "24px",
-                        height: "24px",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                        width: "26px",
+                        height: "26px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -526,7 +544,7 @@ const MyMachines = () => {
                         e.currentTarget.style.color = "#ffffff";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)";
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.94)";
                         e.currentTarget.style.color = "#111827";
                       }}
                     >
@@ -538,17 +556,17 @@ const MyMachines = () => {
                       <span
                         style={{
                           display: "inline-block",
-                          fontSize: "9px",
+                          fontSize: "8.5px",
                           fontWeight: 700,
                           letterSpacing: "0.04em",
-                          padding: "1px 6px",
+                          padding: "1px 5px",
                           borderRadius: "3px",
                           background: "#f3f4f6",
                           color: "#4b5563",
                           border: "1px solid #e5e7eb",
                         }}
                       >
-                        {m.category?.toUpperCase() || "CATALOGUE"}
+                        {categoryTag}
                       </span>
                     </div>
 
