@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useBasket } from "../context/BasketContext";
 
 const STORAGE_KEY = "machine_system_auth";
 
@@ -8,6 +9,8 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { getBasketCount } = useBasket();
+  const basketCount = getBasketCount();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -79,7 +82,7 @@ const Header = () => {
     navigate("/login");
   };
 
-  const currentUser = storedUser || user;
+  const currentUser = user || storedUser;
   const isUserAuthenticated = Boolean(
     currentUser && (currentUser.token || isAuthenticated)
   );
@@ -158,11 +161,11 @@ const Header = () => {
           </NavLink>
         </nav>
         <div className="header-actions">
-          {/* <Link className="basket-link" to="/basket">
+          <Link className="basket-link" to="/basket" aria-label={`View basket (${basketCount} items)`}>
             <i className="bi bi-bag"></i>
             <span>Basket</span>
-            <b>1</b>
-          </Link> */}
+            <b>{basketCount}</b>
+          </Link> 
 
           {isRep ? (
             <div style={{ display: "flex", alignItems: "center" }}>

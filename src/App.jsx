@@ -7,6 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import CarouselInitializer from "./components/CarouselInitializer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { BasketProvider } from "./context/BasketContext";
 
 import Home from "./pages/Home";
 import Machine from "./pages/Machine";
@@ -134,10 +135,11 @@ const SmartSignupRedirect = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <CarouselInitializer />
-        <Header />
+      <BasketProvider>
+        <Router>
+          <ScrollToTop />
+          <CarouselInitializer />
+          <Header />
         <Routes>
           {/* Core Public Pages */}
           <Route path="/" element={<Home />} />
@@ -250,6 +252,7 @@ function App() {
         </Routes>
         <Footer />
       </Router>
+      </BasketProvider>
     </AuthProvider>
   );
 }

@@ -150,7 +150,7 @@ const ProfileSettings = () => {
             <span>01</span>
             <div>
               <h2>Personal details</h2>
-              <p>How your Northline team can reach you.</p>
+              <p>How our team can reach you for your machine configurations and quotations.</p>
             </div>
           </div>
           <div className="profile-fields">

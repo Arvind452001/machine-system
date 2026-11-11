@@ -3,10 +3,12 @@ import { Link, useNavigate, useSearchParams, useLocation } from "react-router-do
 import { enquiriesApi } from "../api/enquiriesApi";
 import { machinesApi } from "../api/machinesApi";
 import { useAuth } from "../context/AuthContext";
+import { useBasket } from "../context/BasketContext";
 import { showErrorAlert, showSuccessAlert } from "../utils/alert";
 
 const Enquiry = () => {
   const navigate = useNavigate();
+  const { clearBasket } = useBasket();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
@@ -17,7 +19,7 @@ const Enquiry = () => {
   try {
     const raw = localStorage.getItem("machine_configured_enquiry");
     if (raw) savedConfig = JSON.parse(raw);
-  } catch (e) {
+  } catch {
     // ignore
   }
 
@@ -212,6 +214,7 @@ const Enquiry = () => {
       const res = await enquiriesApi.createEnquiry(payload);
       const enqNum =
         res?.data?.enquiryNumber || res?.data?.referenceNumber || "Submitted";
+      clearBasket();
       await showSuccessAlert(
         "Enquiry Submitted Successfully",
         `Enquiry ${enqNum} has been received. Your regional representative will review your project.`

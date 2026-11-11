@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { machinesApi } from "../api/machinesApi";
 import { BASE_URL } from "../api/axiosInstance";
+import { useBasket } from "../context/BasketContext";
+import { showAddedToBasketAlert } from "../utils/alert";
 
 // Helper to resolve full URL or half URL conditionally
-export const resolveImageUrl = (img, fallback) => {
+const resolveImageUrl = (img, fallback) => {
   const defaultFallback =
     fallback ||
     "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80";
@@ -21,6 +23,7 @@ export const resolveImageUrl = (img, fallback) => {
 };
 
 const MachineDetails = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [machine, setMachine] = useState(null);
@@ -28,6 +31,7 @@ const MachineDetails = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [relatedMachines, setRelatedMachines] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+  const { addToBasket, getBasketItem } = useBasket();
 
   // Extract ID or Slug from ?id= or ?slug= or #hash
   const targetIdOrSlug =
@@ -126,6 +130,21 @@ const MachineDetails = () => {
           ["System Status", (machine?.status || machine?.publicationStatus || "Published").toUpperCase()],
         ];
 
+  const existingItem = getBasketItem(machine?._id || machine?.slug || targetIdOrSlug);
+
+  const handleAddToBasket = () => {
+    if (!machine) return;
+    const result = addToBasket(machine);
+    if (!result) return;
+
+    showAddedToBasketAlert(
+      machineName,
+      result.isDuplicate,
+      result.item?.quantity || 1,
+      () => navigate("/basket")
+    );
+  };
+
   return (
     <div>
       <main>
@@ -147,7 +166,7 @@ const MachineDetails = () => {
               </h1>
               <p>
                 Compare machine specifications, starting prices, and application
-                details. Choose a platform to configure it for your production
+                details. Add to basket to configure it for your production
                 needs.
               </p>
             </div>
@@ -307,49 +326,55 @@ const MachineDetails = () => {
                     </small>
                   </div>
 
-                  <div className="machine-commerce-actions">
-                    <Link
+                  <div className="machine-commerce-actions" style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+                    <button
+                      type="button"
                       className="button button-lime"
-                      to={`/configure?machine=${
-                        machine?.slug || targetIdOrSlug
-                      }`}
+                      onClick={handleAddToBasket}
+                      style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "8px" }}
                     >
-                      <i className="bi bi-sliders"></i> Configure options
-                    </Link>
-                    <Link
-                      className="button button-dark"
-                      to={`/enquiry?machine=${encodeURIComponent(
-                        machineName
-                      )}&price=${basePrice}&sku=${encodeURIComponent(
-                        machineSku
-                      )}&machineId=${encodeURIComponent(machine?._id || "")}`}
-                      state={{
-                        machineId: machine?._id || "",
-                        machineName,
-                        machineCode: machineSku,
-                        calculatedTotal: basePrice,
-                        selectedOptions: [],
-                      }}
-                      onClick={() => {
-                        try {
-                          localStorage.setItem(
-                            "machine_configured_enquiry",
-                            JSON.stringify({
-                              machineId: machine?._id || "",
-                              machineName,
-                              machineCode: machineSku,
-                              calculatedTotal: basePrice,
-                              selectedOptions: [],
-                            })
-                          );
-                        } catch (e) {
-                          // ignore
-                        }
-                      }}
-                    >
-                      Enquiry Now <i className="bi bi-chat-dots"></i>
-                    </Link>
+                      <i className="bi bi-bag-plus"></i> Add to Basket
+                    </button>
+                    {existingItem ? (
+                      <Link
+                        className="button button-dark"
+                        to="/basket"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                      >
+                        <i className="bi bi-bag-check"></i> View in Basket ({existingItem.quantity})
+                      </Link>
+                    ) : (
+                      <Link
+                        className="button button-dark"
+                        to={`/configure?machine=${machine?.slug || targetIdOrSlug}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+                      >
+                        <i className="bi bi-sliders"></i> Configure Options
+                      </Link>
+                    )}
                   </div>
+
+                  {existingItem && (
+                    <div
+                      style={{
+                        marginTop: "12px",
+                        padding: "9px 13px",
+                        background: "#eff7f2",
+                        border: "1px solid #b7dfc8",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        color: "#1d583b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <i className="bi bi-check-circle-fill" style={{ color: "#27624c" }}></i>
+                      <span>
+                        This machine is currently in your basket ({existingItem.quantity} {existingItem.quantity === 1 ? "unit" : "units"}, {existingItem.isConfigured ? "custom configured" : "default configuration"}).
+                      </span>
+                    </div>
+                  )}
 
                   <div className="machine-commerce-note">
                     <span>

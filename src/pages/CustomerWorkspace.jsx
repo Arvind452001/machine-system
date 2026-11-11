@@ -4,6 +4,7 @@ import { apiClient } from "../api/client";
 import { machinesApi } from "../api/machinesApi";
 import { enquiriesApi } from "../api/enquiriesApi";
 import { useAuth } from "../context/AuthContext";
+import { useBasket } from "../context/BasketContext";
 import Pagination from "../components/Pagination";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -11,6 +12,8 @@ const PAGE_SIZE = 5;
 
 const CustomerWorkspace = () => {
   const { user } = useAuth();
+  const { getBasketCount } = useBasket();
+  const basketCount = getBasketCount();
   const [machines, setMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(true);
   const [loadingEnquiries, setLoadingEnquiries] = useState(true);
@@ -121,10 +124,10 @@ const CustomerWorkspace = () => {
             <span></span> Customer overview
           </div>
           <h1>
-            Your {user?.company || "Northline"} <em> workspace.</em>
+            Your {user?.company || "Customer"} <em> workspace.</em>
           </h1>
           <p>
-            Welcome back, {user?.name || "Morgan"}. Pick up where you left off or explore a machine for your next run.
+            Welcome back, {user?.name || (user?.email ? user.email.split("@")[0] : "Customer")}. Pick up where you left off or explore a machine for your next run.
           </p>
         </div>
         <Link className="button button-lime" to="/machines">
@@ -143,11 +146,11 @@ const CustomerWorkspace = () => {
           <strong>{formatNumber(metrics.quotesReady)}</strong>
           <i className="bi bi-file-earmark-check"></i>
         </article>
-        <article className="customer-metric">
+        <Link to="/basket" className="customer-metric" style={{ textDecoration: "none" }}>
           <span>BASKET ITEMS</span>
-          <strong>{formatNumber(metrics.basketItems)}</strong>
+          <strong>{formatNumber(basketCount)}</strong>
           <i className="bi bi-bag-check"></i>
-        </article>
+        </Link>
         <article className="customer-metric customer-metric-dark">
           <span>MACHINE PLATFORMS</span>
           <strong>{formatNumber(metrics.machinePlatforms)}</strong>
@@ -349,7 +352,7 @@ const CustomerWorkspace = () => {
               <i className="bi bi-arrow-up-right"></i>
             </Link>
             <Link to="/contact">
-              <i className="bi bi-headset"></i> Contact Northline{" "}
+              <i className="bi bi-headset"></i> Contact Support{" "}
               <i className="bi bi-arrow-up-right"></i>
             </Link>
           </div>

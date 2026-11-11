@@ -1,30 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import authApi from "../api/authApi";
-import { STORAGE_KEY } from "../api/axiosInstance";
-
-// Dummy credentials for Customer & Representative fallback/demo
-export const DUMMY_USERS = {
-  customer: {
-    id: "usr_cust_001",
-    email: "customer@machinesystems.com",
-    password: "customer123",
-    role: "customer",
-    name: "Morgan Chen",
-    company: "Chen Industrial Works",
-    initials: "MC",
-    avatarBg: "#27624c",
-  },
-  representative: {
-    id: "usr_rep_001",
-    email: "rep@machinesystems.com",
-    password: "rep123",
-    role: "representative",
-    name: "Alex Morgan",
-    company: "MACHINE Systems (UK Team)",
-    initials: "AM",
-    avatarBg: "#c94f2d",
-  },
-};
+import { axiosInstance, STORAGE_KEY } from "../api/axiosInstance";
 
 const AuthContext = createContext(null);
 
@@ -41,6 +18,20 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
+  /**
+   * Log out and clear state and localStorage
+   */
+  const logout = useCallback(() => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
+    } catch (e) {
+      console.error("Failed to clear auth from localStorage:", e);
+    }
+    setUser(null);
+  }, []);
+
   // Listen to storage changes across tabs/windows
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -56,14 +47,84 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  // Verify token on mount and refresh with real backend profile data
+  useEffect(() => {
+    let mounted = true;
+
+    const verifyAndRefreshProfile = async () => {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return;
+
+      try {
+        const parsed = JSON.parse(stored);
+        if (!parsed?.token) return;
+
+        // Fetch live user profile from backend database
+        const meRes = await authApi.getMe();
+        const profile = meRes?.data?.user || meRes?.data || meRes?.user || meRes;
+
+        if (mounted && profile && (profile._id || profile.email)) {
+          const userName =
+            profile.name ||
+            [profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+            (profile.email ? profile.email.split("@")[0] : parsed.name);
+
+          const updatedUser = {
+            ...parsed,
+            ...profile,
+            id: profile._id || profile.id || parsed.id,
+            _id: profile._id || profile.id || parsed._id,
+            token: parsed.token,
+            role: profile.role || parsed.role || "customer",
+            email: profile.email || parsed.email,
+            name: userName,
+            firstName: profile.firstName || userName.split(" ")[0] || "",
+            lastName: profile.lastName || userName.split(" ").slice(1).join(" ") || "",
+            company: profile.company ?? parsed.company ?? "",
+            phone: profile.phone ?? parsed.phone ?? "",
+            country: profile.country ?? profile.region ?? parsed.country ?? "",
+            region: profile.region ?? profile.country ?? parsed.region ?? "",
+            initials:
+              userName
+                .split(" ")
+                .filter(Boolean)
+                .map((p) => p[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase() || "US",
+            avatarBg:
+              (profile.role || parsed.role) === "representative"
+                ? "#c94f2d"
+                : "#27624c",
+          };
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
+      } catch (err) {
+        console.warn("Session check:", err.message);
+        if (err.status === 401 || err.response?.status === 401) {
+          // Token expired or invalid on backend: log out cleanly
+          console.warn("Session token expired or unauthorized. Logging out.");
+          logout();
+        }
+      }
+    };
+
+    verifyAndRefreshProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [logout]);
+
   /**
-   * Log in with email, password, and optional expected role.
+   * Log in with email, password, and optional expected role against the real backend API
    */
   const login = async (email, password, roleHint = null) => {
     const cleanEmail = (email || "").trim().toLowerCase();
     const cleanPassword = (password || "").trim();
 
-    // 1. Try real backend login via authApi
     try {
       const response = await authApi.login({
         email: cleanEmail,
@@ -77,107 +138,105 @@ export const AuthProvider = ({ children }) => {
         response?.data?.accessToken ||
         response?.accessToken;
 
-      if (accessToken) {
-        let profile = response?.data?.user || response?.user || null;
-        if (!profile && accessToken) {
-          try {
-            const meRes = await authApi.getMe();
-            profile = meRes?.data?.user || meRes?.data || meRes?.user || null;
-          } catch (meErr) {
-            console.warn("Could not fetch profile after login:", meErr.message);
-          }
-        }
+      if (!accessToken) {
+        const errorMsg =
+          response?.message ||
+          response?.data?.message ||
+          "Authentication failed: No access token received from server.";
+        return { success: false, message: errorMsg };
+      }
 
-        const userName = profile?.name || cleanEmail.split("@")[0];
-        const authUser = {
-          ...(profile || {}),
-          id: profile?._id || profile?.id || `usr_${Date.now()}`,
-          token: accessToken,
-          role: profile?.role || roleHint || "customer",
-          email: profile?.email || cleanEmail,
-          name: userName,
-          initials: userName
+      // Extract profile returned by login
+      let profile = response?.data?.user || response?.user || null;
+
+      // If profile is partial, fetch complete live profile from GET /api/v1/auth/me
+      try {
+        const meRes = await axiosInstance.get("/api/v1/auth/me", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const freshProfile = meRes?.data?.user || meRes?.data || meRes?.user || meRes;
+        if (freshProfile && (freshProfile._id || freshProfile.email)) {
+          profile = { ...(profile || {}), ...freshProfile };
+        }
+      } catch (meErr) {
+        console.warn("Could not fetch extended profile after login:", meErr.message);
+      }
+
+      const userName =
+        profile?.name ||
+        [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") ||
+        cleanEmail.split("@")[0];
+
+      const authUser = {
+        ...(profile || {}),
+        id: profile?._id || profile?.id || `usr_${Date.now()}`,
+        _id: profile?._id || profile?.id,
+        token: accessToken,
+        role: profile?.role || roleHint || "customer",
+        email: profile?.email || cleanEmail,
+        name: userName,
+        firstName: profile?.firstName || userName.split(" ")[0] || "",
+        lastName: profile?.lastName || userName.split(" ").slice(1).join(" ") || "",
+        company: profile?.company || "",
+        phone: profile?.phone || "",
+        country: profile?.country || profile?.region || "",
+        region: profile?.region || profile?.country || "",
+        initials:
+          userName
             .split(" ")
+            .filter(Boolean)
             .map((p) => p[0])
             .join("")
             .slice(0, 2)
-            .toUpperCase(),
-          avatarBg:
-            (profile?.role || roleHint) === "representative" ? "#c94f2d" : "#27624c",
-          loginAt: new Date().toISOString(),
-        };
+            .toUpperCase() || "US",
+        avatarBg:
+          (profile?.role || roleHint) === "representative" ? "#c94f2d" : "#27624c",
+        loginAt: new Date().toISOString(),
+      };
 
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-        } catch (e) {
-          console.error("Failed to save to localStorage:", e);
-        }
-        setUser(authUser);
-        return { success: true, user: authUser };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
+      } catch (e) {
+        console.error("Failed to save auth to localStorage:", e);
       }
+
+      setUser(authUser);
+      return { success: true, user: authUser };
     } catch (apiError) {
       const errData = apiError.data || apiError.response?.data;
+
       if (errData?.code === "EMAIL_NOT_VERIFIED") {
         return {
           success: false,
           code: "EMAIL_NOT_VERIFIED",
           email: cleanEmail,
-          message: errData.message || "Please verify your email using the OTP sent to your email.",
+          message:
+            errData.message ||
+            "Please verify your email using the OTP sent to your email address.",
         };
       }
+
       if (errData?.code === "ACCOUNT_PENDING_APPROVAL") {
         return {
           success: false,
           code: "ACCOUNT_PENDING_APPROVAL",
-          message: errData.message || "Your representative account is awaiting administrator approval.",
+          message:
+            errData.message ||
+            "Your representative account is awaiting administrator approval.",
         };
       }
-      console.warn("Backend login failed, checking demo credentials:", apiError.message);
-    }
 
-    // 2. Fallback to demo credentials
-    const isCustomer =
-      (cleanEmail === DUMMY_USERS.customer.email.toLowerCase() ||
-        cleanEmail === "customer@example.com" ||
-        cleanEmail === "morgan@machinesystems.com") &&
-      cleanPassword === DUMMY_USERS.customer.password;
+      const errorMsg =
+        errData?.message ||
+        errData?.error ||
+        apiError.message ||
+        "Invalid email or password. Please verify your credentials.";
 
-    const isRep =
-      (cleanEmail === DUMMY_USERS.representative.email.toLowerCase() ||
-        cleanEmail === "rep@example.com" ||
-        cleanEmail === "alex@machinesystems.com") &&
-      cleanPassword === DUMMY_USERS.representative.password;
-
-    if (isCustomer) {
-      const authUser = {
-        ...DUMMY_USERS.customer,
-        token: `dummy-token-cust-${Date.now()}`,
-        loginAt: new Date().toISOString(),
+      return {
+        success: false,
+        message: errorMsg,
       };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-      } catch (e) {}
-      setUser(authUser);
-      return { success: true, user: authUser };
     }
-
-    if (isRep) {
-      const authUser = {
-        ...DUMMY_USERS.representative,
-        token: `dummy-token-rep-${Date.now()}`,
-        loginAt: new Date().toISOString(),
-      };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-      } catch (e) {}
-      setUser(authUser);
-      return { success: true, user: authUser };
-    }
-
-    return {
-      success: false,
-      message: "Invalid email or password. Please verify your credentials.",
-    };
   };
 
   /**
@@ -212,32 +271,48 @@ export const AuthProvider = ({ children }) => {
       const data = res?.data || res;
 
       if (data?.success) {
-        // Customer verified: Token returned directly
+        // Customer verified: Token and real user returned directly
         if (data?.token && data?.user) {
           const accessToken = data.token;
           const profile = data.user;
-          const userName = profile?.name || email.split("@")[0];
+          const userName =
+            profile?.name ||
+            [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") ||
+            email.split("@")[0];
 
           const authUser = {
             ...profile,
             id: profile?._id || profile?.id || `usr_${Date.now()}`,
+            _id: profile?._id || profile?.id,
             token: accessToken,
             role: profile?.role || "customer",
             email: profile?.email || email,
             name: userName,
-            initials: userName
-              .split(" ")
-              .map((p) => p[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase(),
-            avatarBg: profile?.role === "representative" ? "#c94f2d" : "#27624c",
+            firstName: profile?.firstName || userName.split(" ")[0] || "",
+            lastName: profile?.lastName || userName.split(" ").slice(1).join(" ") || "",
+            company: profile?.company || "",
+            phone: profile?.phone || "",
+            country: profile?.country || profile?.region || "",
+            region: profile?.region || profile?.country || "",
+            initials:
+              userName
+                .split(" ")
+                .filter(Boolean)
+                .map((p) => p[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase() || "US",
+            avatarBg:
+              profile?.role === "representative" ? "#c94f2d" : "#27624c",
             loginAt: new Date().toISOString(),
           };
 
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-          } catch (e) {}
+          } catch (e) {
+            console.error("Failed to save auth to localStorage:", e);
+          }
+
           setUser(authUser);
           return { success: true, user: authUser, message: data.message };
         }
@@ -246,12 +321,17 @@ export const AuthProvider = ({ children }) => {
         return {
           success: true,
           requiresApproval: Boolean(data?.requiresApproval),
-          message: data?.message || "Email verified! Your representative account is pending administrator approval.",
+          message:
+            data?.message ||
+            "Email verified! Your representative account is pending administrator approval.",
           user: data?.user,
         };
       }
 
-      return { success: false, message: data?.message || "Invalid or expired verification code." };
+      return {
+        success: false,
+        message: data?.message || "Invalid or expired verification code.",
+      };
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Failed to verify code.";
       return { success: false, message: msg };
@@ -267,7 +347,8 @@ export const AuthProvider = ({ children }) => {
       const data = res?.data || res;
       return {
         success: true,
-        message: data?.message || "A new verification code has been sent to your email.",
+        message:
+          data?.message || "A new verification code has been sent to your email.",
       };
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Failed to resend code.";
@@ -281,19 +362,40 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       const res = await authApi.updateProfile(profileData);
-      const updatedFields = res?.data?.user || res?.data || res?.user || profileData;
+      const updatedFields =
+        res?.data?.user || res?.data || res?.user || profileData;
+
+      const userName =
+        updatedFields.name ||
+        [updatedFields.firstName, updatedFields.lastName].filter(Boolean).join(" ") ||
+        user?.name;
+
       const mergedUser = {
         ...user,
         ...updatedFields,
-        name: updatedFields.name || profileData.name || user?.name,
-        company: updatedFields.company || profileData.company || user?.company,
-        phone: updatedFields.phone || profileData.phone || user?.phone,
+        name: userName,
+        company: updatedFields.company ?? user?.company ?? "",
+        phone: updatedFields.phone ?? user?.phone ?? "",
         country:
-          updatedFields.country ||
-          profileData.country ||
-          profileData.region ||
-          user?.country ||
-          user?.region,
+          updatedFields.country ??
+          updatedFields.region ??
+          user?.country ??
+          user?.region ??
+          "",
+        region:
+          updatedFields.region ??
+          updatedFields.country ??
+          user?.region ??
+          user?.country ??
+          "",
+        initials:
+          userName
+            .split(" ")
+            .filter(Boolean)
+            .map((p) => p[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase() || user?.initials || "US",
       };
 
       try {
@@ -301,57 +403,21 @@ export const AuthProvider = ({ children }) => {
       } catch (e) {
         console.error("Failed to save updated profile to localStorage:", e);
       }
+
       setUser(mergedUser);
       return { success: true, data: res, user: mergedUser };
     } catch (err) {
       return {
         success: false,
-        message: err.response?.data?.message || err.message || "Failed to update profile",
+        message:
+          err.response?.data?.message || err.message || "Failed to update profile",
       };
     }
   };
 
-  /**
-   * Quick role switch helper for testing between Customer and Representative
-   */
-  const switchRole = (targetRole) => {
-    const targetUser =
-      targetRole === "representative"
-        ? {
-            ...DUMMY_USERS.representative,
-            token: `dummy-token-rep-${Date.now()}`,
-            loginAt: new Date().toISOString(),
-          }
-        : {
-            ...DUMMY_USERS.customer,
-            token: `dummy-token-cust-${Date.now()}`,
-            loginAt: new Date().toISOString(),
-          };
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(targetUser));
-    } catch (e) {
-      console.error("Failed to save switched role to localStorage:", e);
-    }
-    setUser(targetUser);
-    return targetUser;
-  };
-
-  /**
-   * Log out and clear state and localStorage
-   */
-  const logout = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
-      console.error("Failed to clear auth from localStorage:", e);
-    }
-    setUser(null);
-  };
-
   const value = {
     user,
-    isAuthenticated: Boolean(user),
+    isAuthenticated: Boolean(user && user.token),
     isCustomer: user?.role === "customer",
     isRepresentative: user?.role === "representative",
     login,
@@ -361,8 +427,6 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     getMe: () => authApi.getMe(),
     logout,
-    switchRole,
-    dummyCredentials: DUMMY_USERS,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -375,3 +439,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthContext;

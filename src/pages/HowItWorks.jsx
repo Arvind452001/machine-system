@@ -51,35 +51,31 @@ const HowItWorks = () => {
 
         <div className="process-list">
           <article className="process-step">
-            <span>01 / EXPLORE</span>
-            <h3>Find a platform</h3>
+            <span>01 / SELECT PLATFORM</span>
+            <h3>Choose a machine</h3>
             <p>
-              Browse machine families and product details to find equipment that
-              may suit your process and production goals.
+              Browse machine families and compare specifications to select the platform best suited for your shop floor.
             </p>
           </article>
           <article className="process-step">
-            <span>02 / CONFIGURE</span>
+            <span>02 / ADD TO BASKET</span>
+            <h3>Add with default config</h3>
+            <p>
+              Add machines directly to your enquiry basket with factory default configurations. Manage quantities and multiple machines.
+            </p>
+          </article>
+          <article className="process-step">
+            <span>03 / CONFIGURE</span>
             <h3>Shape the options</h3>
             <p>
-              Review available configuration choices and save a starting point
-              for a discussion with the team.
+              Configure options directly from the basket. Customize spindles, tooling, and automation packages with real-time sync.
             </p>
           </article>
           <article className="process-step">
-            <span>03 / ENQUIRE</span>
-            <h3>Tell us about the work</h3>
+            <span>04 / SUBMIT REQUEST</span>
+            <h3>Review &amp; submit</h3>
             <p>
-              Share your application, requirements, and questions. We route your
-              enquiry to a representative for follow-up.
-            </p>
-          </article>
-          <article className="process-step">
-            <span>04 / REVIEW</span>
-            <h3>Discuss your quote</h3>
-            <p>
-              Your representative can review the details, confirm next steps,
-              and prepare a quote based on your needs.
+              Review your configured shortlist, verify engineering details, and submit your formal enquiry for specialist review.
             </p>
           </article>
         </div>

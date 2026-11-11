@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { machinesApi, categoriesApi } from "../api";
 import { BASE_URL } from "../api/axiosInstance";
+import { useBasket } from "../context/BasketContext";
+import { showAddedToBasketAlert } from "../utils/alert";
 
 // Helper to resolve backend image paths (conditional full vs half URL)
 const resolveImageUrl = (img) => {
@@ -30,6 +32,8 @@ const getPageNumbers = (current, total) => {
 };
 
 const Machine = () => {
+  const navigate = useNavigate();
+  const { addToBasket } = useBasket();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL state
@@ -485,10 +489,35 @@ const Machine = () => {
                               <i className="bi bi-arrow-right"></i>
                             </Link>
                           </div>
-                          <Link className="machine-open" to={detailUrl}>
-                            View machine{" "}
-                            <i className="bi bi-arrow-up-right"></i>
-                          </Link>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
+                            <button
+                              type="button"
+                              className="button button-lime"
+                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center", cursor: "pointer", border: "none" }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const result = addToBasket(m);
+                                if (result) {
+                                  showAddedToBasketAlert(
+                                    m.name,
+                                    result.isDuplicate,
+                                    result.item?.quantity || 1,
+                                    () => navigate("/basket")
+                                  );
+                                }
+                              }}
+                            >
+                              <i className="bi bi-bag-plus"></i> Add to Basket
+                            </button>
+                            <Link
+                              className="button button-dark"
+                              to={detailUrl}
+                              style={{ padding: "8px 10px", fontSize: "11px", justifyContent: "center" }}
+                            >
+                              Details <i className="bi bi-arrow-up-right"></i>
+                            </Link>
+                          </div>
                         </div>
                       </article>
                     );

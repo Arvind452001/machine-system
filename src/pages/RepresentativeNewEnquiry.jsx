@@ -194,7 +194,7 @@ const RepresentativeNewEnquiry = () => {
               <input
                 className="rep-input"
                 name="firstName"
-                placeholder="Morgan"
+                placeholder="First name"
                 required
                 value={formData.firstName}
                 onChange={handleChange}

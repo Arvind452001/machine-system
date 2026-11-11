@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { machinesApi } from "../api/machinesApi";
 import { optionsApi } from "../api/optionsApi";
 import { BASE_URL } from "../api/axiosInstance";
+import { useBasket } from "../context/BasketContext";
+import { showSuccessAlert } from "../utils/alert";
 
 // Helper to resolve backend image paths
 const resolveImageUrl = (img) => {
@@ -59,6 +61,8 @@ const extractOptionsByCategory = (m) => {
 const Configure = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { basket, updateBasketItemConfig, addToBasket, getBasketItem } = useBasket();
 
   // Machine slug or ID from query params or URL hash
   const machineParam =
@@ -68,10 +72,24 @@ const Configure = () => {
     location.hash.replace("#", "").replace("-config", "") ||
     "ms-m500";
 
+  const basketItemId = searchParams.get("basketItemId");
+
   const [machine, setMachine] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [ruleValidation, setRuleValidation] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Retrieve matching basket item if present
+  const matchingBasketItem =
+    getBasketItem(basketItemId) ||
+    getBasketItem(machineParam) ||
+    basket.find(
+      (b) =>
+        b.id === basketItemId ||
+        b.machineId === machineParam ||
+        b.machineSlug === machineParam
+    );
 
   useEffect(() => {
     let mounted = true;
@@ -87,19 +105,32 @@ const Configure = () => {
         // Group available options dynamically from API response
         const groups = extractOptionsByCategory(m);
 
-        const initial = {};
+        // Calculate defaults
+        const defaults = {};
         Object.entries(groups).forEach(([catKey, catOpts]) => {
           const defaultOpt =
             catOpts.find((o) => o.isDefault) ||
             catOpts.find((o) => Number(o.priceDelta || 0) === 0);
           if (defaultOpt) {
-            initial[catKey] = defaultOpt._id || defaultOpt.code;
+            defaults[catKey] = defaultOpt._id || defaultOpt.code || defaultOpt.name;
           } else {
-            initial[catKey] = "none";
+            defaults[catKey] = "none";
           }
         });
 
-        setSelectedOptions(initial);
+        // If the basket item already has previous configuration options, preserve them!
+        if (
+          matchingBasketItem &&
+          matchingBasketItem.rawSelectedOptions &&
+          Object.keys(matchingBasketItem.rawSelectedOptions).length > 0
+        ) {
+          setSelectedOptions({
+            ...defaults,
+            ...matchingBasketItem.rawSelectedOptions,
+          });
+        } else {
+          setSelectedOptions(defaults);
+        }
       })
       .catch((err) => {
         console.warn("Could not fetch machine for configurator:", err.message);
@@ -111,12 +142,12 @@ const Configure = () => {
     return () => {
       mounted = false;
     };
-  }, [machineParam]);
+  }, [machineParam, basketItemId, matchingBasketItem]);
 
   // Group options dynamically by category from machine data
-  const groupedCategories = extractOptionsByCategory(machine);
-  const categoryEntries = Object.entries(groupedCategories);
-  const allAvailableOptions = Object.values(groupedCategories).flat();
+  const groupedCategories = useMemo(() => extractOptionsByCategory(machine), [machine]);
+  const categoryEntries = useMemo(() => Object.entries(groupedCategories), [groupedCategories]);
+  const allAvailableOptions = useMemo(() => Object.values(groupedCategories).flat(), [groupedCategories]);
 
   // Real-time rule engine validation (POST /api/v1/options/validate)
   useEffect(() => {
@@ -127,7 +158,7 @@ const Configure = () => {
       .filter((id) => id && id !== "none")
       .map(
         (id) =>
-          allAvailableOptions.find((o) => (o._id || o.code) === id)?.code
+          allAvailableOptions.find((o) => (o._id || o.code || o.name) === id)?.code
       )
       .filter(Boolean);
 
@@ -147,24 +178,27 @@ const Configure = () => {
       .catch((err) => {
         console.warn("Could not validate options rules:", err.message);
       });
-  }, [machine, selectedOptions, machineParam]);
+  }, [machine, selectedOptions, machineParam, allAvailableOptions]);
 
   // Fallbacks if machine data is still loading or using default
-  const machineName = machine?.name ;
+  const machineName = machine?.name || matchingBasketItem?.name || "Machine Platform";
   const machineSku =
-    machine?.sku || machine?.slug?.toUpperCase() ;
-  const machineCategory = (machine?.category || "MILLING").toUpperCase();
+    machine?.sku || machine?.slug?.toUpperCase() || matchingBasketItem?.sku || "MD-SYS";
+  const machineCategory = (machine?.category || matchingBasketItem?.category || "MILLING").toUpperCase();
   const machineSummary =
     machine?.summary ||
     machine?.description?.slice(0, 120) ||
+    matchingBasketItem?.summary ||
     "Production-ready systems with room to make them your own.";
-  const basePrice = Number(machine?.basePrice) || 0;
+  const basePrice = Number(machine?.basePrice || matchingBasketItem?.basePrice) || 0;
 
   const imagesList =
     machine?.images &&
     machine.images.length > 0 &&
     machine.images[0] !== "string"
       ? machine.images
+      : matchingBasketItem?.image
+      ? [matchingBasketItem.image]
       : [
           "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
         ];
@@ -175,7 +209,7 @@ const Configure = () => {
     (total, [catKey, selectedId]) => {
       if (!selectedId || selectedId === "none") return total;
       const opt = (groupedCategories[catKey] || []).find(
-        (o) => (o._id || o.code) === selectedId
+        (o) => (o._id || o.code || o.name) === selectedId
       );
       return total + (Number(opt?.priceDelta) || 0);
     },
@@ -184,43 +218,79 @@ const Configure = () => {
 
   const totalPrice = basePrice + optionsPriceDelta;
 
-  // Format selected options for Swagger-compatible enquiry payload
+  // Format selected options for enquiry payload and basket storage
   const formattedSelectedOptions = Object.entries(selectedOptions)
-    .filter(([_, optId]) => optId && optId !== "none")
+    .filter(([, optId]) => optId && optId !== "none")
     .map(([catKey, optId]) => {
       const opt = (groupedCategories[catKey] || []).find(
-        (o) => (o._id || o.code) === optId
+        (o) => (o._id || o.code || o.name) === optId
       );
       return {
         name: opt?.name || opt?.label || "Option",
         priceDelta: Number(opt?.priceDelta) || 0,
+        category: catKey,
+        optionId: optId,
       };
     });
-
-  const enquiryConfig = {
-    machineId: machine?._id || machineParam || "",
-    machineName: machineName || "Machine Platform",
-    machineCode: machineSku || "MD-SYS",
-    calculatedTotal: totalPrice,
-    selectedOptions: formattedSelectedOptions,
-  };
-
-  const handleSaveEnquiryConfig = () => {
-    try {
-      localStorage.setItem(
-        "machine_configured_enquiry",
-        JSON.stringify(enquiryConfig)
-      );
-    } catch (e) {
-      // ignore
-    }
-  };
 
   const handleCategorySelect = (category, optId) => {
     setSelectedOptions((prev) => ({
       ...prev,
       [category]: optId,
     }));
+  };
+
+  /**
+   * Save updated configuration and synchronize with basket
+   */
+  const handleSaveConfiguration = async () => {
+    setIsSaving(true);
+    try {
+      const targetBasketItemId = basketItemId || matchingBasketItem?.id;
+
+      if (targetBasketItemId) {
+        // Synchronize with existing basket item
+        updateBasketItemConfig(targetBasketItemId, {
+          selectedOptions: formattedSelectedOptions,
+          rawSelectedOptions: selectedOptions,
+          price: totalPrice,
+        });
+      } else {
+        // If not in basket yet, add it with this custom configuration
+        addToBasket(machine, {
+          selectedOptions: formattedSelectedOptions,
+          rawSelectedOptions: selectedOptions,
+          price: totalPrice,
+        });
+      }
+
+      // Keep legacy localStorage in sync for backward compatibility
+      try {
+        localStorage.setItem(
+          "machine_configured_enquiry",
+          JSON.stringify({
+            machineId: machine?._id || machineParam || "",
+            machineName,
+            machineCode: machineSku,
+            calculatedTotal: totalPrice,
+            selectedOptions: formattedSelectedOptions,
+          })
+        );
+      } catch {
+        // ignore
+      }
+
+      await showSuccessAlert(
+        "Configuration Updated",
+        `Configuration for ${machineName} has been synchronized with your basket.`
+      );
+
+      navigate("/basket");
+    } catch (err) {
+      console.error("Error saving configuration:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const categoryLabels = {
@@ -238,8 +308,8 @@ const Configure = () => {
     <div>
       <main>
         <div className="page-crumb">
-          <Link to={`/machine-details?id=${machine?.slug || machineParam}`}>
-            <i className="bi bi-arrow-left"></i> Machine overview
+          <Link to="/basket">
+            <i className="bi bi-arrow-left"></i> Back to basket
           </Link>
           <span>/</span>
           <span>Configure: {machineName}</span>
@@ -248,36 +318,78 @@ const Configure = () => {
         <section className="configure-heading">
           <div>
             <div className="eyebrow">
-              <span></span> Build your specification
+              <span></span> Step 3 · Build your specification
             </div>
             <h1>
-              Make it <em> work harder.</em>
+              Configure <em>{machineName}.</em>
             </h1>
             <p>
-              Compare platform options and find the right starting specification.
+              Select platform options, modular packages, and accessories to tailor this machine to your production setup.
             </p>
           </div>
           <div className="build-code">
-            <span>CONFIGURATION PREVIEW</span>
+            <span>BASKET ITEM</span>
             <strong>
               {machineName} · {machineSku}
             </strong>
           </div>
         </section>
 
-        <div className="stepper">
+        {/* 5-Step Process Stepper */}
+        <div className="stepper" aria-label="Order Process Progress">
+          <Link to="/machines" style={{ textDecoration: "none" }}>
+            <span>
+              <b>01</b> Select
+            </span>
+          </Link>
+          <i></i>
+          <Link to="/basket" style={{ textDecoration: "none" }}>
+            <span>
+              <b>02</b> Basket
+            </span>
+          </Link>
+          <i></i>
           <span className="active">
-            <b>01</b> Configure
+            <b>03</b> Configure
           </span>
           <i></i>
           <span>
-            <b>02</b> Review basket
+            <b>04</b> Review
           </span>
           <i></i>
           <span>
-            <b>03</b> Send enquiry
+            <b>05</b> Submit
           </span>
         </div>
+
+        {matchingBasketItem && (
+          <div
+            style={{
+              padding: "10px 18px",
+              margin: "0 6% 20px",
+              background: "#edf7f1",
+              border: "1px solid #c2e5d1",
+              borderRadius: "6px",
+              color: "#184f36",
+              fontSize: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <i className="bi bi-arrow-repeat text-success"></i>
+              <span>
+                <strong>Basket Synchronization:</strong> Updating configuration for item in your basket (Current Qty: {matchingBasketItem.quantity}).
+              </span>
+            </div>
+            <Link to="/basket" style={{ color: "#184f36", fontWeight: 600, textDecoration: "underline" }}>
+              Return to Basket
+            </Link>
+          </div>
+        )}
 
         {loading ? (
           <div
@@ -352,7 +464,7 @@ const Configure = () => {
 
                   const currentSelectedId = selectedOptions[categoryKey] || "";
                   const selectedOpt = opts.find(
-                    (o) => (o._id || o.code) === currentSelectedId
+                    (o) => (o._id || o.code || o.name) === currentSelectedId
                   );
 
                   const hasFreeDefault = opts.some(
@@ -383,7 +495,7 @@ const Configure = () => {
                           <option value="none">Standard / None (Included)</option>
                         )}
                         {opts.map((opt) => {
-                          const optValue = opt._id || opt.code;
+                          const optValue = opt._id || opt.code || opt.name;
                           const delta = Number(opt.priceDelta || 0);
                           const priceText =
                             delta === 0
@@ -415,9 +527,9 @@ const Configure = () => {
                     className="bi bi-info-circle mb-2 d-block"
                     style={{ fontSize: "1.5rem" }}
                   ></i>
-                  <strong>No configurable options available for this machine.</strong>
+                  <strong>Standard complete platform specification.</strong>
                   <p className="mt-1 mb-0" style={{ fontSize: "13px" }}>
-                    This machine platform is configured as a standard complete platform.
+                    This machine platform operates with complete factory specifications.
                   </p>
                 </div>
               )}
@@ -435,8 +547,6 @@ const Configure = () => {
                   <strong>Verified:</strong> All selected modules and packages pass engineering compatibility checks.
                 </div>
               )}
-
-              
             </div>
 
             <div className="preview-column">
@@ -444,7 +554,7 @@ const Configure = () => {
                 <span>
                   <i className="bi bi-eye"></i> CONFIGURATION PREVIEW
                 </span>
-                <span>REAL-TIME QUOTE</span>
+                <span>SYNCHRONIZED WITH BASKET</span>
               </div>
               <div className="preview-image">
                 <img
@@ -477,7 +587,8 @@ const Configure = () => {
               </p>
 
               <div style={{ marginTop: "20px", display: "grid", gap: "10px" }}>
-                <Link
+                <button
+                  type="button"
                   className="button button-lime"
                   style={{
                     display: "flex",
@@ -485,20 +596,15 @@ const Configure = () => {
                     justifyContent: "center",
                     gap: "8px",
                     width: "100%",
+                    cursor: "pointer",
+                    border: "none",
                   }}
-                  to={`/enquiry?machine=${encodeURIComponent(
-                    machineName
-                  )}&price=${totalPrice}&sku=${encodeURIComponent(
-                    machineSku
-                  )}&machineId=${encodeURIComponent(
-                    machine?._id || machineParam || ""
-                  )}&configured=true`}
-                  state={enquiryConfig}
-                  onClick={handleSaveEnquiryConfig}
+                  onClick={handleSaveConfiguration}
+                  disabled={isSaving}
                 >
-                  <i className="bi bi-chat-dots"></i> Request Quote for this
-                  Build
-                </Link>
+                  <i className="bi bi-check-circle"></i>
+                  {isSaving ? "Saving Configuration..." : "Save Configuration to Basket"}
+                </button>
                 <Link
                   className="button button-dark"
                   style={{
@@ -508,9 +614,9 @@ const Configure = () => {
                     gap: "8px",
                     width: "100%",
                   }}
-                  to={`/machine-details?id=${machine?.slug || machineParam}`}
+                  to="/basket"
                 >
-                  <i className="bi bi-arrow-left"></i> Back to Machine Details
+                  <i className="bi bi-arrow-left"></i> Return to Basket
                 </Link>
               </div>
             </div>
@@ -523,25 +629,21 @@ const Configure = () => {
           </div>
           <div>
             <span className="eyebrow eyebrow-light">
-              Ready to discuss your build?
+              Step 4 &amp; 5 · Review and Submit
             </span>
-            <h2>Take your specification further.</h2>
+            <h2>Save and proceed to request.</h2>
           </div>
           <p>
-            Our team can confirm compatible options and prepare your final quote.
+            Save this configuration to your basket where you can review your complete order and submit your request.
           </p>
-          <Link
+          <button
+            type="button"
             className="contact-action"
-            to={`/enquiry?machine=${encodeURIComponent(
-              machineName
-            )}&price=${totalPrice}&sku=${encodeURIComponent(
-              machineSku
-            )}&machineId=${encodeURIComponent(machine?._id || machineParam || "")}`}
-            state={enquiryConfig}
-            onClick={handleSaveEnquiryConfig}
+            onClick={handleSaveConfiguration}
+            style={{ cursor: "pointer", border: "none" }}
           >
-            Continue to enquiry <i className="bi bi-arrow-up-right"></i>
-          </Link>
+            Save &amp; Proceed to Basket <i className="bi bi-arrow-up-right"></i>
+          </button>
         </section>
       </main>
     </div>

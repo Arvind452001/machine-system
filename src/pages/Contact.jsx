@@ -169,7 +169,7 @@ const Contact = () => {
                   name="name"
                   autoComplete="name"
                   required
-                  placeholder="Morgan Chen"
+                  placeholder="Your full name"
                   value={formData.name}
                   onChange={handleChange}
                 />
