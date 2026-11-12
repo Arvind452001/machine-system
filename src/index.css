@@ -843,24 +843,26 @@ img[src*="assets.haascnc.com"] {
 .build-code span { display: block; color: #879189; font-size: 6px; }
 .build-code strong { display: block; margin-top: 4px; font-size: 8px; font-weight: 500; }
 .stepper { padding: 0 6% 18px; display: flex; align-items: center; gap: 13px; }
+.stepper a { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
 .stepper span { display: flex; align-items: center; gap: 7px; color: #929c94; font-size: 11px; }
 .stepper b {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  max-width: 24px;
-  min-height: 24px;
-  max-height: 24px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  min-height: 22px;
+  max-height: 22px;
   aspect-ratio: 1 / 1;
-  flex: 0 0 24px;
+  flex: 0 0 22px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 50%;
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
   line-height: 1;
   box-sizing: border-box;
   margin: 0;
@@ -1182,7 +1184,8 @@ textarea.form-control { min-height: 83px; resize: vertical; }
     aspect-ratio: 1 / 1;
     flex: 0 0 20px;
     flex-shrink: 0;
-    font-size: 8px;
+    font-size: 6.5px;
+    font-weight: 500;
   }
   .stepper > i { width: 13px; flex-shrink: 0; }
   .configure-layout { padding: 0 16px 40px; grid-template-columns: 1fr; gap: 16px; }
