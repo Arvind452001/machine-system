@@ -576,7 +576,11 @@ const Basket = () => {
                           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                             <Link
                               className="text-link"
-                              to={`/configure?machine=${item.machineSlug || item.machineId}&basketItemId=${item.id}`}
+                              to={
+                                item.category === "TILTROTATORS & ATTACHMENTS" || item.machineSlug?.startsWith("tilt-")
+                                  ? `/tilt-rotator?model=${item.machineSlug?.replace("tilt-", "") || "2ton"}`
+                                  : `/configure?machine=${item.machineSlug || item.machineId}&basketItemId=${item.id}`
+                              }
                               style={{
                                 fontWeight: 600,
                                 fontSize: "12px",

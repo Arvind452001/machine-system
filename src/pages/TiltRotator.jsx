@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import tiltRotatorData from "../data/tiltRotatorData.json";
 import { useBasket } from "../context/BasketContext";
 import { useAuth } from "../context/AuthContext";
-import { showSuccessAlert } from "../utils/alert";
+import { showSuccessAlert, showErrorAlert } from "../utils/alert";
+import { enquiriesApi } from "../api/enquiriesApi";
 
 const FALLBACK_BUILD_IMG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='360' viewBox='0 0 500 360'%3E%3Crect width='500' height='360' fill='%23f8faf9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='15'%3ELive build rendering preview%3C/text%3E%3C/svg%3E";
@@ -13,6 +14,7 @@ const FALLBACK_PART_IMG =
 
 const TiltRotator = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { addToBasket } = useBasket();
   const { user } = useAuth();
 
@@ -33,6 +35,7 @@ const TiltRotator = () => {
   const [viewedOptionId, setViewedOptionId] = useState(null);
   const [viewMode, setViewMode] = useState("select"); // "select" | "config" | "summary"
   const [orderRef, setOrderRef] = useState("");
+  const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
   const [contactInfo, setContactInfo] = useState({
     name: "",
     company: "",
@@ -53,6 +56,21 @@ const TiltRotator = () => {
       }));
     }
   }, [user]);
+
+  // Support direct model selection via URL parameter ?model=2ton
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && config?.models) {
+      const matched = config.models.find(
+        (m) =>
+          m.id.toLowerCase() === modelParam.toLowerCase() ||
+          m.name.toLowerCase() === modelParam.toLowerCase()
+      );
+      if (matched && currentModelId !== matched.id) {
+        startConfig(matched.id);
+      }
+    }
+  }, [searchParams, config]);
 
   const currentModel = useMemo(() => {
     if (!currentModelId || !config?.models) return null;
@@ -174,8 +192,10 @@ const TiltRotator = () => {
       const opt = step.options.find((o) => o.id === selections[step.id]);
       return {
         name: opt ? opt.name : "Standard",
+        code: opt?.id || "",
         category: step.name.replace(/^\d+\.\s*/, ""),
         price: opt ? opt.price : 0,
+        priceDelta: opt ? opt.price : 0,
         image: opt?.partImage || "",
       };
     });
@@ -201,6 +221,83 @@ const TiltRotator = () => {
       `Tilt Rotator ${currentModel.name} has been added to your shopping basket with all chosen options.`
     );
     navigate("/basket");
+  };
+
+  const handleDirectSubmitQuote = async () => {
+    if (!contactInfo.name?.trim() || !contactInfo.email?.trim()) {
+      showErrorAlert(
+        "Contact Information Required",
+        "Please provide your contact name and email address to submit your quotation request directly."
+      );
+      return;
+    }
+
+    setSubmittingEnquiry(true);
+    try {
+      const total = calculateTotal();
+      const lastStep = currentModel.steps.length - 1;
+      const buildImg = getBuildImage(lastStep);
+
+      const configuredOptions = currentModel.steps.map((step) => {
+        const opt = step.options.find((o) => o.id === selections[step.id]);
+        return {
+          name: opt ? opt.name : "Standard",
+          code: opt?.id || "",
+          category: step.name.replace(/^\d+\.\s*/, ""),
+          price: opt ? opt.price : 0,
+          priceDelta: opt ? opt.price : 0,
+          image: opt?.partImage || "",
+        };
+      });
+
+      const optionsSummaryText = configuredOptions
+        .map((o) => `${o.category}: ${o.name} (€${o.price})`)
+        .join(" | ");
+
+      const nameParts = contactInfo.name.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || firstName;
+
+      const payload = {
+        firstName,
+        lastName,
+        name: contactInfo.name.trim(),
+        fullName: contactInfo.name.trim(),
+        email: contactInfo.email.trim(),
+        phone: contactInfo.phone.trim() || "+1-000-000-0000",
+        company: contactInfo.company.trim() || "Industrial Client",
+        country: "United States",
+        whenToInstall: "Within 1-3 months",
+        timeline: "Within 1-3 months",
+        machineCode: `TR-${currentModel.name.toUpperCase()}`,
+        machineName: `Tilt Rotator ${currentModel.name}`,
+        calculatedTotal: total,
+        selectedOptions: configuredOptions,
+        whatShouldWeKnow: `Tilt-Rotator Order Ref #${orderRef}\nCustomer Notes: ${contactInfo.notes || "None"}\nConfiguration: ${optionsSummaryText}`,
+        message: `Tilt-Rotator ${currentModel.name} (Custom Config) - Ref #${orderRef}`,
+        contactConsent: true,
+      };
+
+      const res = await enquiriesApi.createEnquiry(payload);
+      const refNo = res?.data?.referenceNumber || res?.data?.enquiryNumber || orderRef;
+
+      showSuccessAlert(
+        "Quotation Request Sent!",
+        `Your Tilt-Rotator request (Ref: ${refNo}) has been submitted. Our engineering desk and your local representative will review your specifications.`
+      );
+
+      if (user) {
+        navigate("/customer/enquiries");
+      }
+    } catch (err) {
+      console.error("Direct enquiry error:", err);
+      showErrorAlert(
+        "Submission Error",
+        err?.response?.data?.message || "Failed to submit quotation request. Please try adding to basket instead."
+      );
+    } finally {
+      setSubmittingEnquiry(false);
+    }
   };
 
   return (
@@ -810,9 +907,20 @@ const TiltRotator = () => {
                 type="button"
                 className="button button-lime"
                 onClick={handleAddToBasket}
-                style={{ minHeight: "36px", fontSize: "11px", padding: "0 16px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                style={{ minHeight: "36px", fontSize: "11px", padding: "0 14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
-                <i className="bi bi-bag-plus"></i> Add to Basket &amp; Request Quote
+                <i className="bi bi-bag-plus"></i> Add to Basket
+              </button>
+
+              <button
+                type="button"
+                className="button button-dark"
+                disabled={submittingEnquiry}
+                onClick={handleDirectSubmitQuote}
+                style={{ minHeight: "36px", fontSize: "11px", padding: "0 16px", display: "inline-flex", alignItems: "center", gap: "6px", background: "#173f35", color: "#ffffff" }}
+              >
+                <i className={`bi ${submittingEnquiry ? "bi-hourglass-split" : "bi-send-check"}`}></i>
+                {submittingEnquiry ? "Submitting Request..." : "Submit Quote Request Directly"}
               </button>
             </div>
           </div>
@@ -1105,3 +1213,4 @@ const TiltRotator = () => {
 };
 
 export default TiltRotator;
+
