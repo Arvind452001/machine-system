@@ -21,6 +21,7 @@ import LogIn from "./pages/LogIn";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 import Reviews from "./pages/Reviews";
+import TiltRotator from "./pages/TiltRotator";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 import RepresentativeLayout from "./layouts/RepresentativeLayout";
@@ -64,6 +65,8 @@ function LegacyHtmlRedirect() {
     "how-it-works": "/how-it-works",
     reviews: "/reviews",
     "customer-stories": "/reviews",
+    "tilt-rotator": "/tilt-rotator",
+    "tiltrotator": "/tilt-rotator",
     login: "/login",
     signup: "/signup",
     "customer-dashboard": "/customer/dashboard",
@@ -155,6 +158,8 @@ function App() {
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/customer-stories" element={<Navigate to="/reviews" replace />} />
+          <Route path="/tilt-rotator" element={<TiltRotator />} />
+          <Route path="/configurator/tilt-rotator" element={<Navigate to="/tilt-rotator" replace />} />
 
           {/* Auth Pages (Guest only: redirects logged in users to their dashboard) */}
           <Route

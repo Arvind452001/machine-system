@@ -26,8 +26,8 @@ const Footer = () => {
           <div className="footer-column">
             <h3>Explore</h3>
             <Link to="/machines">Machine catalogue</Link>
-            <Link to="/machines">Browse all machinery</Link>
             <Link to="/configure">Machine configurator</Link>
+            <Link to="/tilt-rotator">Tilt-Rotator 3D Config</Link>
           </div>
           <div className="footer-column">
             <h3>Your project</h3>

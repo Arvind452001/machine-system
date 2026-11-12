@@ -209,6 +209,9 @@ const Home = () => {
 
               <i className="bi bi-arrow-up-right"></i>
             </Link>
+            <Link className="button button-secondary" to="/tilt-rotator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderRadius: '8px', fontWeight: 600, background: '#f4f6f8', border: '1px solid #dcdfe4', color: '#1a1f2c', textDecoration: 'none' }}>
+              <i className="bi bi-gear-wide-connected" style={{ color: '#0052cc' }}></i> 3D Tilt-Rotator
+            </Link>
             <Link className="quiet-link" to="#how-it-works">See how it works 
 
               <i className="bi bi-arrow-down-right"></i>

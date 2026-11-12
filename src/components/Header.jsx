@@ -148,6 +148,12 @@ const Header = () => {
             Machines
           </NavLink>
           <NavLink
+            to="/tilt-rotator"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Tilt-Rotator
+          </NavLink>
+          <NavLink
             to="/about"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
