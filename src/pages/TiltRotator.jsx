@@ -5,6 +5,7 @@ import { useBasket } from "../context/BasketContext";
 import { useAuth } from "../context/AuthContext";
 import { showSuccessAlert, showErrorAlert } from "../utils/alert";
 import { enquiriesApi } from "../api/enquiriesApi";
+import { contentApi } from "../api/contentApi";
 
 const FALLBACK_BUILD_IMG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='360' viewBox='0 0 500 360'%3E%3Crect width='500' height='360' fill='%23f8faf9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='15'%3ELive build rendering preview%3C/text%3E%3C/svg%3E";
@@ -18,8 +19,8 @@ const TiltRotator = () => {
   const { addToBasket } = useBasket();
   const { user } = useAuth();
 
-  // Load configuration from JSON or localStorage
-  const config = useMemo(() => {
+  // Load configuration with live backend sync and local fallback
+  const [config, setConfig] = useState(() => {
     try {
       const stored = localStorage.getItem("tiltRotatorConfig_v2");
       if (stored) return JSON.parse(stored);
@@ -27,6 +28,36 @@ const TiltRotator = () => {
       // ignore
     }
     return tiltRotatorData;
+  });
+
+  // Fetch live synchronized configuration from backend database
+  useEffect(() => {
+    let mounted = true;
+    contentApi
+      .getContentBySlug("tilt-rotator-config")
+      .then((res) => {
+        if (!mounted) return;
+        const bodyStr = res?.data?.body || res?.body;
+        if (bodyStr) {
+          try {
+            const parsed = typeof bodyStr === "string" ? JSON.parse(bodyStr) : bodyStr;
+            if (parsed?.models && Array.isArray(parsed.models) && parsed.models.length > 0) {
+              setConfig(parsed);
+              try {
+                localStorage.setItem("tiltRotatorConfig_v2", JSON.stringify(parsed));
+              } catch {}
+            }
+          } catch (e) {
+            console.warn("Could not parse remote config:", e);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch remote tilt-rotator config:", err);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const [currentModelId, setCurrentModelId] = useState(null);
