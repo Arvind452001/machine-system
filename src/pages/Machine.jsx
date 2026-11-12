@@ -472,6 +472,82 @@ const Machine = () => {
               </span>
             </div>
 
+            {/* Featured 3D Configurator Banner */}
+            <div
+              style={{
+                marginBottom: "20px",
+                background: "linear-gradient(135deg, #18221e 0%, #22322c 100%)",
+                borderRadius: "8px",
+                padding: "16px 22px",
+                color: "#ffffff",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "14px",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <div
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "6px",
+                    background: "rgba(201, 79, 45, 0.22)",
+                    border: "1px solid rgba(201, 79, 45, 0.4)",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#f57b51",
+                    fontSize: "20px",
+                    flexShrink: 0,
+                  }}
+                >
+                  <i className="bi bi-bounding-box-circles"></i>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#f57b51",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    INTERACTIVE 3D STUDIO
+                  </div>
+                  <div style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", lineHeight: 1.2 }}>
+                    Tilt-Rotators &amp; Excavator Attachments
+                  </div>
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.72)", marginTop: "2px" }}>
+                    Configure VRX2 &amp; VRX5 modular units with real-time 3D assembly and live EUR quote.
+                  </div>
+                </div>
+              </div>
+              <Link
+                to="/tilt-rotator"
+                className="btn-accent"
+                style={{
+                  height: "36px",
+                  padding: "0 16px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  flexShrink: 0,
+                }}
+              >
+                <span>Launch 3D Configurator</span>
+                <i className="bi bi-arrow-right"></i>
+              </Link>
+            </div>
+
             <section className="catalog-main" id="all-machines">
               {/* Loading State */}
               {loading ? (

@@ -150,8 +150,23 @@ const Header = () => {
           <NavLink
             to="/tilt-rotator"
             className={({ isActive }) => (isActive ? "active" : "")}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
           >
-            Tilt-Rotator
+            <span>3D Configurator</span>
+            <span
+              style={{
+                fontSize: "9px",
+                fontWeight: 700,
+                padding: "1px 5px",
+                borderRadius: "3px",
+                background: "rgba(201, 79, 45, 0.18)",
+                color: "#c94f2d",
+                letterSpacing: "0.05em",
+                lineHeight: "1.2",
+              }}
+            >
+              3D
+            </span>
           </NavLink>
           <NavLink
             to="/about"
