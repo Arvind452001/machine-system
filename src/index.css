@@ -3839,6 +3839,62 @@ body.customer-dashboard-page > .site-header,
   margin-bottom: 18px;
 }
 
+/* Tilt-Rotator 3D Configurator Responsive & Transparent Image Layout */
+.tilt-config-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(320px, 1.25fr) minmax(320px, 1.25fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.tilt-image-container {
+  background: transparent !important;
+  border: 1px dashed rgba(220, 225, 218, 0.6);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.tilt-image-container:hover {
+  border-color: rgba(201, 79, 45, 0.4);
+}
+
+.tilt-image-container img {
+  background: transparent !important;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.08));
+}
+
+@media (max-width: 1140px) {
+  .tilt-config-grid {
+    grid-template-columns: minmax(280px, 340px) 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 960px) {
+  .tilt-config-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .tilt-image-container {
+    min-height: 280px !important;
+    height: 320px !important;
+  }
+  .tilt-image-container img {
+    max-height: 300px !important;
+  }
+}
+
+/* Dark mode transparency support */
+@media (prefers-color-scheme: dark) {
+  .tilt-image-container {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .tilt-image-container img {
+    filter: drop-shadow(0 10px 25px rgba(255, 255, 255, 0.05));
+  }
+}
+
+
 
 
 

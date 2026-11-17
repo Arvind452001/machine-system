@@ -8,10 +8,10 @@ import { enquiriesApi } from "../api/enquiriesApi";
 import { contentApi } from "../api/contentApi";
 
 const FALLBACK_BUILD_IMG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='360' viewBox='0 0 500 360'%3E%3Crect width='500' height='360' fill='%23f8faf9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='15'%3ELive build rendering preview%3C/text%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='360' viewBox='0 0 500 360'%3E%3Crect width='500' height='360' fill='none'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='15'%3ELive build rendering preview%3C/text%3E%3C/svg%3E";
 
 const FALLBACK_PART_IMG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260'%3E%3Crect width='400' height='260' fill='%23f1f5f2'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='14'%3EPart visual preview%3C/text%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260'%3E%3Crect width='400' height='260' fill='none'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='14'%3EPart visual preview%3C/text%3E%3C/svg%3E";
 
 const TiltRotator = () => {
   const navigate = useNavigate();
@@ -408,20 +408,22 @@ const TiltRotator = () => {
               >
                 <div
                   style={{
-                    height: "200px",
-                    background: "#fdfefe",
-                    borderRadius: "6px",
+                    minHeight: "240px",
+                    height: "260px",
+                    background: "transparent",
+                    borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
                     marginBottom: "16px",
+                    padding: "10px",
                   }}
                 >
                   <img
                     src={model.image || FALLBACK_BUILD_IMG}
                     alt={model.name}
-                    style={{ maxHeight: "180px", maxWidth: "90%", objectFit: "contain" }}
+                    style={{ maxHeight: "240px", maxWidth: "96%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
                   />
                 </div>
 
@@ -559,9 +561,9 @@ const TiltRotator = () => {
 
           {/* 3-Column Layout */}
           <div
+            className="tilt-config-grid"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
               gap: "20px",
               alignItems: "stretch",
             }}
@@ -744,22 +746,24 @@ const TiltRotator = () => {
                   </div>
 
                   <div
+                    className="tilt-image-container"
                     style={{
-                      height: "220px",
-                      background: "#fafafa",
-                      border: "1px solid #eef2ed",
-                      borderRadius: "6px",
+                      minHeight: "340px",
+                      height: "360px",
+                      background: "transparent",
+                      borderRadius: "8px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      marginBottom: "14px",
+                      marginBottom: "16px",
                       overflow: "hidden",
+                      padding: "10px",
                     }}
                   >
                     <img
                       src={displayOpt?.partImage || FALLBACK_PART_IMG}
                       alt={displayOpt?.name || "Part"}
-                      style={{ maxHeight: "200px", maxWidth: "90%", objectFit: "contain" }}
+                      style={{ maxHeight: "340px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
                     />
                   </div>
 
@@ -836,22 +840,24 @@ const TiltRotator = () => {
 
               {/* Dynamic Live Build Image */}
               <div
+                className="tilt-image-container"
                 style={{
-                  height: "220px",
-                  background: "#fdfefe",
-                  border: "1px solid #eef2ed",
-                  borderRadius: "6px",
+                  minHeight: "360px",
+                  height: "380px",
+                  background: "transparent",
+                  borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: "14px",
+                  marginBottom: "16px",
                   overflow: "hidden",
+                  padding: "10px",
                 }}
               >
                 <img
                   src={getBuildImage(currentStep) || FALLBACK_BUILD_IMG}
                   alt="Live machine build"
-                  style={{ maxHeight: "205px", maxWidth: "92%", objectFit: "contain", transition: "all 0.25s ease" }}
+                  style={{ maxHeight: "360px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent", transition: "all 0.25s ease" }}
                 />
               </div>
 
@@ -1055,20 +1061,20 @@ const TiltRotator = () => {
 
                 <div
                   style={{
-                    height: "170px",
-                    background: "#ffffff",
-                    border: "1px solid #eef2ed",
+                    height: "260px",
+                    background: "transparent",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
+                    padding: "10px",
                   }}
                 >
                   <img
                     src={getBuildImage(currentModel.steps.length - 1) || FALLBACK_BUILD_IMG}
                     alt="Finished Tilt Rotator"
-                    style={{ maxHeight: "155px", maxWidth: "90%", objectFit: "contain" }}
+                    style={{ maxHeight: "245px", maxWidth: "95%", objectFit: "contain", background: "transparent" }}
                   />
                 </div>
               </div>
