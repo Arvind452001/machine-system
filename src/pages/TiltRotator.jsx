@@ -420,11 +420,13 @@ const TiltRotator = () => {
                     padding: "10px",
                   }}
                 >
-                  <img
-                    src={model.image || FALLBACK_BUILD_IMG}
-                    alt={model.name}
-                    style={{ maxHeight: "240px", maxWidth: "96%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
-                  />
+                  {model.image && (
+                    <img
+                      src={model.image}
+                      alt={model.name}
+                      style={{ maxHeight: "240px", maxWidth: "96%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
+                    />
+                  )}
                 </div>
 
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
@@ -760,11 +762,13 @@ const TiltRotator = () => {
                       padding: "10px",
                     }}
                   >
-                    <img
-                      src={displayOpt?.partImage || FALLBACK_PART_IMG}
-                      alt={displayOpt?.name || "Part"}
-                      style={{ maxHeight: "340px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
-                    />
+                    {displayOpt?.partImage && (
+                      <img
+                        src={displayOpt.partImage}
+                        alt={displayOpt?.name || "Part"}
+                        style={{ maxHeight: "340px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent" }}
+                      />
+                    )}
                   </div>
 
                   <div style={{ flex: 1 }}>
@@ -854,11 +858,13 @@ const TiltRotator = () => {
                   padding: "10px",
                 }}
               >
-                <img
-                  src={getBuildImage(currentStep) || FALLBACK_BUILD_IMG}
-                  alt="Live machine build"
-                  style={{ maxHeight: "360px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent", transition: "all 0.25s ease" }}
-                />
+                {getBuildImage(currentStep) && (
+                  <img
+                    src={getBuildImage(currentStep)}
+                    alt="Live machine build"
+                    style={{ maxHeight: "360px", maxWidth: "98%", width: "auto", height: "auto", objectFit: "contain", background: "transparent", transition: "all 0.25s ease" }}
+                  />
+                )}
               </div>
 
               {/* Running Price Total */}
@@ -1071,11 +1077,13 @@ const TiltRotator = () => {
                     padding: "10px",
                   }}
                 >
-                  <img
-                    src={getBuildImage(currentModel.steps.length - 1) || FALLBACK_BUILD_IMG}
-                    alt="Finished Tilt Rotator"
-                    style={{ maxHeight: "245px", maxWidth: "95%", objectFit: "contain", background: "transparent" }}
-                  />
+                  {getBuildImage(currentModel.steps.length - 1) && (
+                    <img
+                      src={getBuildImage(currentModel.steps.length - 1)}
+                      alt="Finished Tilt Rotator"
+                      style={{ maxHeight: "245px", maxWidth: "95%", objectFit: "contain", background: "transparent" }}
+                    />
+                  )}
                 </div>
               </div>
 
