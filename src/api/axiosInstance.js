@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Default base URL to live backend API
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://node.aitechnotech.in/machine";
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://technorizen.co.in/machine";
 
 export const API_BASE_URL = rawBaseUrl;
   
