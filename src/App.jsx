@@ -141,7 +141,7 @@ function App() {
   return (
     <AuthProvider>
       <BasketProvider>
-        <Router>
+        <Router basename="/machine">
           <ScrollToTop />
           <CarouselInitializer />
           <Header />
